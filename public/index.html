@@ -939,9 +939,11 @@
   .contacto{background:var(--verde-osc);color:#c6dfcf;padding:90px 40px 30px}
   .contacto .wrap{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:50px;max-width:1200px;margin:0 auto}
   .contacto h2{
-    font-size:clamp(2.5rem,5vw,4rem);color:#fff;margin-bottom:20px;
+    font-size:clamp(1.8rem,3.4vw,2.6rem);color:#fff;margin-bottom:18px;
+    display:flex;align-items:center;gap:14px;line-height:1.1;
   }
   .contacto h2 .accent{color:var(--rojo);font-weight:700}
+  .contacto-logo{height:54px;width:auto;flex-shrink:0}
   .contacto .blurb{font-size:15.5px;line-height:1.7;max-width:440px;color:#c6dfcf}
   .contacto h4{
     font-family:'Manrope',sans-serif;
@@ -1551,8 +1553,8 @@
 <footer class="contacto" id="contacto">
   <div class="wrap">
     <div>
-      <h2>Club <span class="accent">Parque.</span></h2>
-      <p class="blurb">Desde 1949 en Villa del Parque. Verde, rojo y blanco. La cuna de cracks del fútbol argentino.</p>
+      <h2><img src="/logo.png" alt="Escudo Club Parque" class="contacto-logo"><span>Club Parque.</span></h2>
+      <p class="blurb">Desde 1949 en Villa del Parque. La cuna de cracks del fútbol argentino.</p>
       <div class="social">
         <a href="https://instagram.com/club.parque" target="_blank" rel="noopener" aria-label="Instagram institucional">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
