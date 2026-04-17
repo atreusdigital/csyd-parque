@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club Parque · La cuna de cracks · Villa del Parque</title>
+<meta name="description" content="Club Social y Deportivo Parque. Desde 1949 en Villa del Parque. Fútbol infantil, futsal, cestoball, fútbol femenino y newcom. Alquiler de cancha reglamentaria de futsal.">
+<meta name="theme-color" content="#005020">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Club Parque">
+<meta property="og:title" content="Club Parque · La cuna de cracks">
+<meta property="og:description" content="76 años en Villa del Parque. Por nuestras inferiores pasaron Riquelme, Tevez, Paredes y Mac Allister. Fútbol infantil, futsal, cestoball, fútbol femenino y newcom. Alquiler de cancha.">
+<meta property="og:image" content="/img/parque-frente.jpg">
+<meta property="og:image:width" content="1424">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Fachada del Club Social y Deportivo Parque en Marcos Sastre 3268, Villa del Parque">
+<meta property="og:locale" content="es_AR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Club Parque · La cuna de cracks">
+<meta name="twitter:description" content="76 años en Villa del Parque. Fútbol infantil, futsal, cestoball, fútbol femenino y newcom.">
+<meta name="twitter:image" content="/img/parque-frente.jpg">
+
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --verde:#005020;
+    --verde-osc:#003818;
+    --verde-claro:#e6efe8;
+    --rojo:#e0282e;
+    --rojo-osc:#b01b22;
+    --blanco:#ffffff;
+    --hueso:#f6f3ee;
+    --tinta:#0e1711;
+    --mute:#5c6660;
+    --mute-light:#8a948d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Manrope',sans-serif;
+    color:var(--tinta);
+    background:var(--blanco);
+    line-height:1.65;
+    font-size:16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  img{max-width:100%;display:block}
+
+  h1,h2,h3,h4{font-family:'Manrope',sans-serif;font-weight:800;letter-spacing:-.035em;line-height:1}
+
+  /* ═══ Navigation ═══ */
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    padding:14px 28px;
+    display:flex;justify-content:space-between;align-items:center;
+    border-bottom:1px solid rgba(0,80,32,.1);
+    transition:border-color .3s;
+    isolation:isolate;
+  }
+  .nav::before{
+    content:'';position:absolute;inset:0;z-index:-1;
+    background:rgba(255,255,255,.94);
+    backdrop-filter:saturate(1.1) blur(12px);
+    -webkit-backdrop-filter:saturate(1.1) blur(12px);
+  }
+  .nav.scrolled{border-bottom-color:var(--verde);box-shadow:0 2px 12px rgba(0,0,0,.05)}
+  .nav .brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+  .nav .brand img{height:42px;width:auto}
+  .nav .brand .wordmark{
+    font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:22px;color:var(--verde-osc);
+    line-height:1;
+  }
+  .nav .brand .wordmark small{display:block;font-family:'Manrope',sans-serif;font-size:9px;font-weight:700;letter-spacing:2.4px;color:var(--rojo);text-transform:uppercase;margin-top:2px}
+  .nav ul{display:flex;gap:28px;list-style:none;align-items:center}
+  .nav ul a{
+    font-family:'Manrope',sans-serif;
+    text-transform:uppercase;font-size:11px;font-weight:700;
+    letter-spacing:1.4px;color:var(--tinta);
+    text-decoration:none;transition:color .15s;
+  }
+  .nav ul a:hover{color:var(--rojo)}
+  .nav ul a.cta{
+    background:var(--verde);color:#fff;padding:10px 16px;border-radius:4px;
+  }
+  .nav ul a.cta:hover{background:var(--verde-osc);color:#fff}
+
+  /* Hamburger toggle — visible solo en mobile */
+  .nav-toggle{
+    display:none;
+    width:44px;height:44px;border:0;background:transparent;
+    padding:0;cursor:pointer;position:relative;z-index:90;
+  }
+  .nav-toggle span{
+    display:block;width:22px;height:2px;background:var(--verde-osc);
+    margin:5px auto;border-radius:2px;
+    transition:transform .3s ease, opacity .2s ease;
+  }
+  body.menu-open .nav-toggle span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  body.menu-open .nav-toggle span:nth-child(2){opacity:0}
+  body.menu-open .nav-toggle span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  .nav-backdrop{
+    position:fixed;inset:0;background:rgba(14,23,17,.55);z-index:40;
+    opacity:0;pointer-events:none;transition:opacity .25s;
+  }
+  body.menu-open .nav-backdrop{opacity:1;pointer-events:auto}
+
+  /* ═══ Hero ═══ */
+  .hero{
+    min-height:auto;
+    padding:110px 40px 56px;
+    background:var(--verde);
+    color:var(--blanco);
+    position:relative;overflow:hidden;
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .hero::before{
+    content:'';position:absolute;inset:0;
+    background:
+      linear-gradient(180deg, rgba(0,56,24,.78) 0%, rgba(0,56,24,.65) 50%, rgba(0,56,24,.92) 100%),
+      url('/img/parque-frente.jpg') center var(--hero-bg-y, 30%)/cover no-repeat;
+    pointer-events:none;
+    will-change:background-position;
+  }
+  .hero::after{
+    content:'';position:absolute;bottom:0;left:0;right:0;height:6px;background:var(--rojo);
+  }
+  .hero-inner{position:relative;z-index:2;max-width:1240px;margin:0 auto;width:100%}
+  .hero .eyebrow{
+    font-family:'Manrope',sans-serif;
+    text-transform:uppercase;letter-spacing:4px;
+    font-size:12px;font-weight:700;
+    color:var(--verde-claro);margin-bottom:28px;
+  }
+  .hero .eyebrow::before{
+    content:'';display:inline-block;width:40px;height:2px;background:var(--rojo);
+    margin-right:14px;vertical-align:middle;
+  }
+  .hero h1{
+    font-family:'Manrope',sans-serif;
+    font-size:clamp(3.6rem,11vw,11rem);
+    line-height:.9;letter-spacing:-.055em;
+    font-weight:600;color:var(--blanco);
+  }
+  .hero h1 .accent{color:var(--rojo);display:block;font-weight:700}
+  .hero .tagline{
+    max-width:640px;margin-top:28px;
+    font-size:clamp(16px,1.4vw,18px);line-height:1.55;
+    color:#dbe8df;
+    font-family:'Manrope',sans-serif;
+  }
+  .hero .tagline strong{color:#fff;font-weight:700}
+  .hero .cta-row{display:flex;gap:12px;margin-top:28px;flex-wrap:wrap}
+  .hero .footnote{
+    font-family:'Manrope',sans-serif;
+    font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
+    color:#9ab8a3;margin-top:36px;
+  }
+
+  /* Scroll indicator */
+  .scroll-indicator{
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+    z-index:3;color:#fff;text-decoration:none;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    opacity:.8;transition:opacity .2s;
+  }
+  .scroll-indicator:hover{opacity:1}
+  .scroll-indicator .scroll-txt{
+    font-family:'Manrope',sans-serif;font-size:10px;letter-spacing:2.5px;
+    text-transform:uppercase;font-weight:700;color:#c6dfcf;
+  }
+  .scroll-indicator .scroll-arrow{
+    animation:scrollBounce 1.8s ease-in-out infinite;
+    display:flex;align-items:center;justify-content:center;
+  }
+  @keyframes scrollBounce{
+    0%,100%{transform:translateY(0);opacity:.7}
+    50%{transform:translateY(8px);opacity:1}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .scroll-indicator .scroll-arrow{animation:none}
+  }
+
+  /* Section break — respiro blanco entre secciones oscuras */
+  .section-break{height:28px;background:#fff}
+  @media(max-width:640px){.section-break{height:20px}}
+
+  /* Stripe ribbon — identidad visual (franjas estilo camiseta retro) */
+  .stripe-ribbon{
+    height:10px;width:100%;
+    background:repeating-linear-gradient(
+      -45deg,
+      var(--verde) 0 18px,
+      #ffffff 18px 22px,
+      var(--rojo) 22px 40px,
+      #ffffff 40px 44px
+    );
+  }
+
+  /* Stats strip */
+  .stats-strip{
+    background:var(--verde-osc);color:#fff;
+    padding:56px 28px;position:relative;
+  }
+  .stats-strip .wrap{
+    max-width:1200px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(4,1fr);gap:20px;
+    text-align:center;
+  }
+  .stats-strip .stat{
+    padding:8px 14px;
+    border-right:1px solid rgba(255,255,255,.15);
+  }
+  .stats-strip .stat:last-child{border-right:0}
+  .stats-strip .num{
+    font-family:'Manrope',sans-serif;
+    font-size:clamp(3rem,7.5vw,5.2rem);
+    font-weight:800;line-height:1;letter-spacing:-.04em;
+    color:#fff;font-variant-numeric:tabular-nums;
+    display:block;
+  }
+  .stats-strip .num .sfx{color:var(--rojo);margin-left:2px}
+  .stats-strip .lbl{
+    margin-top:12px;
+    font-family:'Manrope',sans-serif;
+    font-size:11px;text-transform:uppercase;letter-spacing:1.8px;
+    font-weight:700;color:#c6dfcf;line-height:1.4;
+  }
+  @media(max-width:720px){
+    .stats-strip{padding:40px 22px}
+    .stats-strip .wrap{grid-template-columns:repeat(2,1fr);gap:28px 12px}
+    .stats-strip .stat{border-right:0;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:18px}
+    .stats-strip .stat:nth-last-child(-n+2){border-bottom:0;padding-bottom:0}
+  }
+
+  /* Iconos de disciplinas */
+  .disc-icon{
+    width:58px;height:58px;border-radius:50%;
+    background:var(--verde-claro);color:var(--verde-osc);
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:16px;
+    transition:background .25s,color .25s,transform .2s;
+  }
+  .disc-card:hover .disc-icon{
+    background:var(--rojo);color:#fff;transform:rotate(-6deg);
+  }
+  .disc-icon svg{width:30px;height:30px}
+
+  /* Duotono en galería — gris verdoso con tinte rojo. Hover revela color original. */
+  .slide{position:relative}
+  .slide::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg, rgba(0,80,32,.55) 0%, rgba(224,40,46,.42) 100%);
+    mix-blend-mode:multiply;pointer-events:none;
+    border-radius:inherit;
+    transition:opacity .4s ease;
+  }
+  .slide img{
+    filter:grayscale(100%) contrast(1.08) brightness(1.02);
+  }
+  .slide:hover img{filter:none}
+  .slide:hover::after{opacity:0}
+  @media (prefers-reduced-motion: reduce){
+    .slide img,.slide::after{transition:none}
+  }
+
+  /* ═══ Buttons ═══ */
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:15px 26px;
+    font-family:'Manrope',sans-serif;
+    font-size:13px;font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;text-decoration:none;
+    border-radius:3px;cursor:pointer;border:0;
+    transition:background .18s,transform .08s,color .18s,border-color .18s;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--rojo);color:#fff}
+  .btn-primary:hover{background:var(--rojo-osc)}
+  .btn-ghost{background:transparent;color:#fff;border:2px solid #fff}
+  .btn-ghost:hover{background:#fff;color:var(--verde)}
+  .btn-dark{background:var(--verde);color:#fff}
+  .btn-dark:hover{background:var(--verde-osc)}
+  .btn-dark-ghost{background:transparent;color:var(--verde);border:2px solid var(--verde)}
+  .btn-dark-ghost:hover{background:var(--verde);color:#fff}
+
+  /* ═══ Sections ═══ */
+  section{padding:100px 40px;position:relative}
+  .wrap{max-width:1200px;margin:0 auto}
+  .section-eyebrow{
+    font-family:'Manrope',sans-serif;
+    text-transform:uppercase;letter-spacing:3px;
+    font-size:11px;font-weight:700;
+    color:var(--rojo);margin-bottom:16px;
+  }
+  .section-eyebrow::before{
+    content:'';display:inline-block;width:32px;height:2px;background:var(--rojo);
+    margin-right:12px;vertical-align:middle;
+  }
+  section h2{
+    font-size:clamp(2.5rem,5.5vw,4.5rem);
+    letter-spacing:-.035em;margin-bottom:32px;
+    color:var(--verde);
+  }
+  section h2 .accent{color:var(--rojo);font-weight:700}
+
+  /* ═══ Historia ═══ */
+  .historia{background:var(--hueso)}
+  .historia h2{max-width:840px}
+  .historia .body{max-width:720px;font-size:19px;line-height:1.75;color:var(--tinta)}
+  .historia .body p{margin-bottom:22px}
+  .historia .body p:first-child::first-letter{
+    font-family:'Manrope',sans-serif;
+    font-size:68px;float:left;line-height:.85;padding:6px 10px 0 0;
+    color:var(--rojo);font-weight:800;
+  }
+  .names{
+    margin-top:64px;padding:28px 32px;
+    background:#fff;border-left:5px solid var(--rojo);
+    border-radius:0 6px 6px 0;
+  }
+  .names .label{
+    font-family:'Manrope',sans-serif;
+    font-size:10px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--rojo);font-weight:700;margin-bottom:14px;
+  }
+  .names .list{
+    font-family:'Manrope',sans-serif;
+    font-size:clamp(1.5rem,3vw,2.3rem);line-height:1.35;
+    color:var(--verde-osc);
+  }
+  .names .list .accent{color:var(--rojo);font-weight:700}
+  .names .count{
+    font-family:'Manrope',sans-serif;
+    font-size:11px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--mute);font-weight:600;margin-top:18px;
+  }
+  .champions{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:14px;margin-top:0;
+  }
+  .champion{
+    padding:18px 20px;
+    display:flex;align-items:center;gap:16px;
+    background:#fff;border:1px solid var(--verde-claro);
+    border-radius:10px;text-align:left;
+    transition:border-color .25s, box-shadow .25s, transform .25s;
+  }
+  .champion:hover{
+    border-color:var(--verde);
+    box-shadow:0 12px 28px rgba(0,80,32,.1);
+    transform:translateY(-2px);
+  }
+  .champ-avatar{
+    width:64px;height:64px;border-radius:50%;
+    object-fit:cover;flex-shrink:0;
+    border:2px solid var(--verde);
+    background:var(--hueso);
+  }
+  .champ-info{flex:1;min-width:0}
+  .champion .year{
+    font-family:'Manrope',sans-serif;
+    font-size:30px;font-weight:700;
+    color:var(--rojo);line-height:1;letter-spacing:-.02em;
+  }
+  .champion .name{
+    font-family:'Manrope',sans-serif;
+    font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--verde-osc);margin-top:4px;
+  }
+  .champion .trophy{
+    font-family:'Manrope',sans-serif;
+    font-size:10px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--mute);margin-top:3px;
+  }
+
+  /* ═══ Disciplinas ═══ */
+  .disciplinas .lead{
+    max-width:680px;font-size:18px;color:var(--mute);
+    margin-bottom:50px;line-height:1.7;
+  }
+  .disciplinas-grid{
+    display:grid;gap:22px;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  }
+  .disc-card{
+    background:#fff;
+    border:1px solid var(--verde-claro);
+    border-top:5px solid var(--verde);
+    padding:30px 28px;border-radius:4px;
+    transition:transform .2s,box-shadow .2s,border-color .2s;
+    display:flex;flex-direction:column;
+  }
+  .disc-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 16px 36px rgba(0,80,32,.12);
+    border-top-color:var(--rojo);
+  }
+  .disc-card h3{
+    font-family:'Manrope',sans-serif;
+    font-size:32px;color:var(--verde-osc);margin-bottom:4px;
+  }
+  .disc-card .meta{
+    font-family:'Manrope',sans-serif;
+    font-size:11px;text-transform:uppercase;letter-spacing:1.8px;
+    color:var(--rojo);margin-bottom:18px;font-weight:700;
+  }
+  .disc-card p{font-size:14.5px;line-height:1.6;color:var(--tinta)}
+  .disc-card .schedule{
+    margin-top:auto;padding-top:18px;
+    border-top:1px dashed var(--verde-claro);
+    font-family:'Manrope',sans-serif;font-size:13px;
+  }
+  .disc-card .schedule .row{
+    display:flex;justify-content:space-between;gap:8px;
+    padding:4px 0;border-bottom:1px dotted #eef2ee;
+    flex-wrap:wrap;
+  }
+  .disc-card .schedule .row:last-child{border-bottom:0}
+  .disc-card .schedule .cat{color:var(--verde-osc);font-weight:700;flex:1 1 auto}
+  .disc-card .schedule .when{color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .disc-card.nuevo::before{
+    content:'Nuevo';
+    font-family:'Manrope',sans-serif;font-size:9px;letter-spacing:2px;
+    background:var(--rojo);color:#fff;padding:3px 9px;border-radius:3px;
+    align-self:flex-start;text-transform:uppercase;font-weight:700;
+    margin-bottom:12px;
+  }
+  .disc-card.pendiente .schedule{color:var(--mute-light)}
+
+  /* ═══ Instalaciones ═══ */
+  .instalaciones{background:var(--verde);color:var(--blanco)}
+  .instalaciones .section-eyebrow{color:#ffc4c7}
+  .instalaciones .section-eyebrow::before{background:var(--rojo)}
+  .instalaciones h2{color:#fff}
+  .instalaciones h2 em{color:var(--rojo)}
+  .instalaciones .lead{max-width:720px;font-size:18px;color:#c6dfcf;line-height:1.7;margin-bottom:50px}
+  .cancha-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:14px;
+  }
+  .cancha{
+    padding:26px 24px 24px;position:relative;
+    background:rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:10px;
+    transition:background .25s, border-color .25s, transform .25s;
+  }
+  .cancha:hover{
+    background:rgba(0,0,0,.38);
+    border-color:rgba(255,255,255,.22);
+    transform:translateY(-2px);
+  }
+  .cancha .num{
+    font-family:'Manrope',sans-serif;
+    font-size:44px;line-height:.9;font-weight:700;
+    color:var(--rojo);margin-bottom:10px;
+    display:inline-block;letter-spacing:-.02em;
+  }
+  .cancha h3{
+    font-family:'Manrope',sans-serif;
+    font-size:24px;color:#fff;margin-bottom:6px;font-weight:700;
+  }
+  .cancha .type{
+    font-family:'Manrope',sans-serif;
+    font-size:10px;text-transform:uppercase;letter-spacing:2px;
+    color:#c6dfcf;margin-bottom:18px;font-weight:700;
+  }
+  .cancha p{font-size:14.5px;color:#e8f0e8;line-height:1.6}
+  .cancha .badge-alquiler{
+    display:inline-block;margin-top:14px;
+    font-family:'Manrope',sans-serif;
+    font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+    background:var(--rojo);color:#fff;padding:4px 10px;border-radius:3px;font-weight:700;
+  }
+
+  /* ═══ Alquiler ═══ */
+  .alquiler{background:var(--hueso);text-align:center}
+  .alquiler .wrap{max-width:880px}
+  .alquiler h2{margin:0 auto 24px}
+  .alquiler .lead{font-size:18px;color:var(--mute);max-width:680px;margin:0 auto 36px;line-height:1.75}
+  .alquiler .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px}
+  .alquiler .facts{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:20px;margin-top:20px;text-align:left;
+  }
+  .fact{
+    background:#fff;border-left:4px solid var(--verde);
+    padding:18px 20px;border-radius:4px;
+  }
+  .fact .label{
+    font-family:'Manrope',sans-serif;font-size:10px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--rojo);font-weight:700;margin-bottom:6px;
+  }
+  .fact .value{
+    font-family:'Manrope',sans-serif;font-size:22px;
+    color:var(--verde-osc);font-weight:600;
+  }
+
+  /* Alquiler form */
+  .alquiler-form{
+    display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;
+    max-width:720px;margin:10px auto 40px;text-align:left;
+    background:#fff;border:1px solid var(--verde-claro);border-radius:8px;
+    padding:28px 28px 26px;
+    box-shadow:0 6px 24px rgba(0,80,32,.07);
+  }
+  .alquiler-form .field{display:flex;flex-direction:column;gap:6px}
+  .alquiler-form .field.full{grid-column:1/-1;margin-top:6px}
+  .alquiler-form label{
+    font-family:'Manrope',sans-serif;
+    font-size:11px;font-weight:700;letter-spacing:1.2px;
+    text-transform:uppercase;color:var(--verde-osc);
+  }
+  .alquiler-form input,.alquiler-form select{
+    font-family:'Manrope',sans-serif;
+    font-size:15px;padding:12px 14px;
+    border:1px solid var(--verde-claro);border-radius:4px;
+    background:#fff;color:var(--tinta);
+    transition:border-color .15s,box-shadow .15s;
+  }
+  .alquiler-form input:focus,.alquiler-form select:focus{
+    outline:none;border-color:var(--verde);
+    box-shadow:0 0 0 3px rgba(0,80,32,.15);
+  }
+  .alquiler-form input:disabled,.alquiler-form select:disabled{background:#f0f0f0;cursor:wait}
+  .alquiler-form .btn{width:100%;font-size:14px;padding:16px}
+  .form-msg{
+    font-family:'Manrope',sans-serif;font-size:13px;margin-top:10px;
+    min-height:20px;font-weight:600;
+  }
+  .form-msg.ok{color:var(--verde)}
+  .form-msg.err{color:var(--rojo-osc)}
+  @media(max-width:560px){ .alquiler-form{grid-template-columns:1fr;padding:22px 18px} }
+
+  /* Grilla de disponibilidad */
+  .slots-grid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
+    margin-top:8px;min-height:70px;
+  }
+  .slot-btn{
+    background:#fff;border:2px solid var(--verde-claro);
+    padding:12px 8px;border-radius:6px;cursor:pointer;
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;
+    color:var(--verde-osc);
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:border-color .15s,background .15s,color .15s,transform .08s;
+  }
+  .slot-btn small{font-weight:500;font-size:9.5px;color:var(--mute);letter-spacing:.8px;text-transform:uppercase}
+  .slot-btn:hover:not(.taken){border-color:var(--verde);background:var(--verde-claro)}
+  .slot-btn:active:not(.taken){transform:translateY(1px)}
+  .slot-btn.selected{border-color:var(--verde);background:var(--verde);color:#fff}
+  .slot-btn.selected small{color:#c6dfcf}
+  .slot-btn.taken{
+    background:#f5f5f5;color:#aaa;border-color:#e5e5e5;
+    cursor:not-allowed;text-decoration:line-through;
+  }
+  .slot-btn.taken small{color:#bbb;text-decoration:none}
+  .slots-hint{
+    grid-column:1/-1;font-size:13px;color:var(--mute);
+    text-align:center;padding:22px 10px;margin:0;
+    font-family:'Manrope',sans-serif;
+  }
+  .slots-hint.err{color:var(--rojo-osc);font-style:normal;font-weight:600}
+  @media(max-width:560px){ .slots-grid{grid-template-columns:repeat(3,1fr)} }
+
+  /* Figuras y galerías */
+  figure{margin:0}
+  .historia-figure{
+    margin:50px 0 10px;border-radius:8px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.18);
+    position:relative;
+  }
+  .historia-figure img{width:100%;height:auto;display:block}
+  .historia-figure figcaption{
+    padding:14px 20px;background:#fff;
+    font-family:'Manrope',sans-serif;font-size:12px;color:var(--mute);
+    border-top:3px solid var(--rojo);
+  }
+  .historia-figure figcaption cite{font-style:normal;color:var(--mute-light);margin-left:6px}
+
+  /* CTA anotarse por WhatsApp en cada disciplina */
+  .btn-anotarse{
+    margin-top:auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--verde);color:#fff;padding:12px 16px;
+    font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;
+    text-transform:uppercase;text-decoration:none;border-radius:4px;
+    transition:background .15s,transform .08s;
+    align-self:stretch;text-align:center;
+  }
+  .btn-anotarse:hover{background:var(--verde-osc)}
+  .btn-anotarse:active{transform:translateY(1px)}
+  .btn-anotarse svg{flex-shrink:0}
+
+  .predio-hero{
+    margin:0 0 50px;border-radius:8px;overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,.3);
+    aspect-ratio:16/7;background:#000;
+  }
+  .predio-hero img{width:100%;height:100%;object-fit:cover;display:block}
+  @media(max-width:820px){ .predio-hero{aspect-ratio:4/3} }
+
+  /* Galería — Bento Grid */
+  .galeria{background:var(--hueso)}
+  .galeria .gal-lead{max-width:680px;font-size:17px;color:var(--mute);margin-bottom:40px;line-height:1.7}
+  .bento-grid{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    grid-auto-rows:88px;
+    grid-auto-flow:dense;
+    gap:12px;
+    margin-top:30px;
+  }
+  .bento-item{
+    position:relative;border:0;padding:0;margin:0;
+    border-radius:14px;overflow:hidden;cursor:pointer;
+    background:#0a1410;
+    box-shadow:0 8px 24px rgba(0,0,0,.15);
+    transition:transform .35s cubic-bezier(.2,.7,.3,1),box-shadow .35s,opacity .3s;
+    opacity:0;transform:translateY(24px) scale(.96);
+  }
+  .bento-item.in{opacity:1;transform:none}
+  .bento-item:hover{
+    transform:translateY(-4px) scale(1.02);
+    box-shadow:0 20px 44px rgba(0,0,0,.28);
+    z-index:2;
+  }
+  .bento-item img{
+    width:100%;height:100%;object-fit:cover;display:block;
+    transition:transform .5s cubic-bezier(.2,.7,.3,1),filter .5s;
+    filter:grayscale(35%) contrast(1.05);
+  }
+  .bento-item:hover img{filter:none;transform:scale(1.05)}
+  .bento-item::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(to top, rgba(0,0,0,.6) 0%, rgba(0,0,0,0) 50%);
+    opacity:0;transition:opacity .3s;pointer-events:none;
+  }
+  .bento-item:hover::after{opacity:1}
+  .bento-item .bento-caption{
+    position:absolute;left:14px;right:14px;bottom:12px;
+    color:#fff;opacity:0;transform:translateY(6px);
+    transition:opacity .3s,transform .3s;pointer-events:none;
+    z-index:2;
+  }
+  .bento-item:hover .bento-caption{opacity:1;transform:none}
+  .bento-item .bento-caption h4{
+    font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;
+    letter-spacing:.3px;line-height:1.2;margin:0;color:#fff;
+  }
+  /* Spans */
+  .b-lg{grid-column:span 3;grid-row:span 4}
+  .b-md{grid-column:span 2;grid-row:span 3}
+  .b-sq{grid-column:span 2;grid-row:span 2}
+  .b-tall{grid-column:span 1;grid-row:span 3}
+  .b-wide{grid-column:span 3;grid-row:span 2}
+
+  @media(max-width:1000px){
+    .bento-grid{grid-template-columns:repeat(4,1fr);grid-auto-rows:90px}
+    .b-lg{grid-column:span 2;grid-row:span 3}
+    .b-md{grid-column:span 2;grid-row:span 2}
+    .b-wide{grid-column:span 2;grid-row:span 2}
+  }
+  @media(max-width:640px){
+    .bento-grid{grid-template-columns:repeat(2,1fr);grid-auto-rows:120px;gap:10px}
+    .b-lg,.b-md,.b-sq,.b-wide{grid-column:span 2;grid-row:span 2}
+    .b-tall{grid-column:span 1;grid-row:span 2}
+  }
+
+  /* Bento modal (lightbox con dock) */
+  .bento-modal{
+    position:fixed;inset:0;z-index:200;
+    background:rgba(10,15,12,.94);
+    backdrop-filter:blur(12px) saturate(1.1);
+    -webkit-backdrop-filter:blur(12px) saturate(1.1);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:30px 20px 20px;gap:18px;
+    opacity:0;pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .bento-modal.show{opacity:1;pointer-events:auto}
+  .bento-modal[hidden]{display:none}
+  .bento-stage{
+    position:relative;
+    max-width:min(92vw,1100px);max-height:72vh;
+    transform:scale(.96);transition:transform .32s cubic-bezier(.2,.7,.3,1);
+    display:flex;flex-direction:column;align-items:center;
+    gap:10px;
+  }
+  .bento-modal.show .bento-stage{transform:scale(1)}
+  .bento-big{
+    max-width:100%;max-height:66vh;object-fit:contain;
+    border-radius:10px;
+    box-shadow:0 24px 70px rgba(0,0,0,.55);
+    display:block;
+  }
+  .bento-meta{
+    color:#fff;text-align:center;max-width:640px;
+    font-family:'Manrope',sans-serif;font-size:13px;
+    opacity:.85;letter-spacing:.3px;
+  }
+  .bento-close{
+    position:absolute;top:14px;right:14px;z-index:10;
+    width:44px;height:44px;border-radius:50%;
+    background:rgba(255,255,255,.12);color:#fff;border:0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .2s,transform .1s;
+    -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  }
+  .bento-close:hover{background:rgba(255,255,255,.25)}
+  .bento-close:active{transform:scale(.92)}
+  .bento-nav{
+    position:absolute;top:50%;transform:translateY(-50%);z-index:10;
+    width:46px;height:46px;border-radius:50%;
+    background:rgba(255,255,255,.10);color:#fff;border:0;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .2s;
+  }
+  .bento-nav:hover{background:rgba(255,255,255,.22)}
+  .bento-nav.prev{left:16px}
+  .bento-nav.next{right:16px}
+  .bento-nav:disabled{opacity:.3;cursor:not-allowed}
+  .bento-dock{
+    display:flex;gap:6px;padding:10px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:16px;
+    max-width:92vw;overflow-x:auto;scrollbar-width:thin;
+  }
+  .bento-dock::-webkit-scrollbar{height:4px}
+  .bento-dock::-webkit-scrollbar-thumb{background:rgba(255,255,255,.25);border-radius:2px}
+  .bento-dock img{
+    width:54px;height:54px;object-fit:cover;border-radius:8px;cursor:pointer;
+    transition:transform .25s cubic-bezier(.2,.7,.3,1),outline-offset .2s,opacity .2s;
+    opacity:.65;outline:2px solid transparent;outline-offset:0;
+    flex-shrink:0;
+  }
+  .bento-dock img:hover{opacity:1;transform:translateY(-3px) scale(1.08)}
+  .bento-dock img.active{
+    opacity:1;outline-color:var(--verde);outline-offset:3px;
+    transform:translateY(-4px) scale(1.15);
+  }
+  @media(max-width:640px){
+    .bento-dock img{width:42px;height:42px}
+    .bento-nav{width:38px;height:38px}
+    .bento-nav.prev{left:8px}
+    .bento-nav.next{right:8px}
+  }
+
+  /* Antes / Después — slider de reapertura */
+  .antes-despues{background:var(--hueso);padding:110px 28px}
+  .antes-despues .ad-lead{
+    max-width:680px;font-size:17px;color:var(--mute);
+    margin-bottom:40px;line-height:1.7;
+  }
+  .compare-wrapper{
+    position:relative;width:100%;max-width:1100px;margin:0 auto;
+    aspect-ratio:16/9;border-radius:14px;overflow:hidden;
+    box-shadow:0 30px 70px rgba(0,0,0,.22);
+    user-select:none;touch-action:none;
+    background:#000;cursor:ew-resize;
+  }
+  .compare-img{
+    position:absolute;inset:0;width:100%;height:100%;
+    object-fit:cover;display:block;pointer-events:none;
+    -webkit-user-drag:none;user-drag:none;
+  }
+  .compare-img.top{
+    clip-path:inset(0 0 0 var(--ad-pos,50%));
+    -webkit-clip-path:inset(0 0 0 var(--ad-pos,50%));
+  }
+  .compare-label{
+    position:absolute;top:22px;
+    font-family:'Manrope',sans-serif;
+    font-weight:800;font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+    color:#fff;padding:8px 14px;border-radius:999px;
+    background:rgba(14,23,17,.72);backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.18);
+    pointer-events:none;
+  }
+  .compare-label.antes{left:22px}
+  .compare-label.despues{right:22px;background:rgba(0,80,32,.82);border-color:rgba(255,255,255,.24)}
+  .compare-divider{
+    position:absolute;top:0;bottom:0;
+    left:var(--ad-pos,50%);width:3px;
+    background:#fff;box-shadow:0 0 18px rgba(0,0,0,.45);
+    transform:translateX(-1.5px);pointer-events:none;
+  }
+  .compare-handle{
+    position:absolute;top:50%;left:var(--ad-pos,50%);
+    width:56px;height:56px;border-radius:50%;
+    background:#fff;border:3px solid var(--verde);
+    transform:translate(-50%,-50%);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 10px 28px rgba(0,0,0,.35);
+    cursor:ew-resize;touch-action:none;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .compare-handle:hover{transform:translate(-50%,-50%) scale(1.06)}
+  .compare-handle:active{cursor:grabbing}
+  .compare-handle svg{width:22px;height:22px;fill:var(--verde)}
+  .compare-hint{
+    display:block;text-align:center;margin-top:18px;
+    font-family:'Manrope',sans-serif;font-size:13px;color:var(--mute-light);
+    letter-spacing:.04em;
+  }
+  @media(max-width:640px){
+    .antes-despues{padding:60px 18px}
+    .compare-wrapper{aspect-ratio:4/3}
+    .compare-label{top:14px;font-size:10.5px;padding:6px 11px}
+    .compare-label.antes{left:14px}
+    .compare-label.despues{right:14px}
+    .compare-handle{width:46px;height:46px}
+    .compare-handle svg{width:18px;height:18px}
+  }
+
+  /* Names marquee — barra de nombres históricos */
+  .names-marquee{
+    background:var(--verde-osc);color:#fff;
+    overflow:hidden;position:relative;
+    padding:22px 0;
+    border-top:1px solid rgba(255,255,255,.08);
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .historia > .names-marquee{
+    margin:50px -40px 50px;
+  }
+  @media(max-width:640px){
+    .historia > .names-marquee{margin:36px -22px}
+  }
+  .names-marquee::before,
+  .names-marquee::after{
+    content:'';position:absolute;top:0;bottom:0;width:90px;z-index:2;
+    pointer-events:none;
+  }
+  .names-marquee::before{left:0;background:linear-gradient(90deg,var(--verde-osc) 0%,transparent 100%)}
+  .names-marquee::after{right:0;background:linear-gradient(-90deg,var(--verde-osc) 0%,transparent 100%)}
+  .names-track{
+    display:flex;width:max-content;gap:0;
+    animation:namesScroll 38s linear infinite;
+    will-change:transform;
+  }
+  .names-track:hover{animation-play-state:paused}
+  .names-track span{
+    font-family:'Manrope',sans-serif;
+    font-weight:700;font-size:clamp(18px,2.4vw,28px);
+    letter-spacing:-.01em;color:#fff;
+    padding:0 28px;white-space:nowrap;
+    display:inline-flex;align-items:center;
+  }
+  .names-track span.accent{color:var(--rojo)}
+  .names-track .dot{
+    width:7px;height:7px;border-radius:50%;background:var(--rojo);
+    padding:0;margin:0 2px;opacity:.75;align-self:center;flex-shrink:0;
+  }
+  @keyframes namesScroll{
+    from{transform:translateX(0)}
+    to{transform:translateX(-50%)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .names-track{animation:none;width:100%;overflow-x:auto;scrollbar-width:none}
+    .names-track::-webkit-scrollbar{display:none}
+  }
+
+  /* Reseñas de Google */
+  .reviews{background:#fff}
+  .reviews .rev-lead{max-width:640px;font-size:17px;color:var(--mute);margin-bottom:28px;line-height:1.7}
+  .reviews-badge{
+    display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap;
+    background:#fff;border:1px solid #e5e7eb;
+    padding:10px 20px 10px 10px;border-radius:999px;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+    margin-bottom:36px;
+  }
+  .reviews-badge .g-icon{
+    width:38px;height:38px;border-radius:50%;
+    background:#fff;border:1px solid #e5e7eb;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .reviews-badge .g-icon svg{width:22px;height:22px}
+  .reviews-badge .rating-score{
+    font-family:'Manrope',sans-serif;
+    font-weight:800;font-size:17px;color:#1f2937;letter-spacing:-.01em;
+  }
+  .reviews-badge .stars{display:inline-flex;gap:2px}
+  .reviews-badge .stars svg{width:17px;height:17px;fill:#fbbc05}
+  .reviews-badge .rating-count{
+    font-family:'Manrope',sans-serif;font-size:13.5px;color:#6b7280;
+    padding-left:12px;border-left:1px solid #e5e7eb;font-weight:500;
+  }
+  .reviews-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+    gap:16px;
+  }
+  .review-card{
+    background:#fff;border:1px solid #e5e7eb;
+    border-radius:14px;padding:22px 24px;
+    transition:border-color .25s,box-shadow .25s,transform .25s;
+  }
+  .review-card:hover{
+    border-color:var(--verde);
+    box-shadow:0 12px 32px rgba(0,80,32,.08);
+    transform:translateY(-3px);
+  }
+  .review-head{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+  .review-avatar{
+    width:44px;height:44px;border-radius:50%;
+    background:#e0ecff;color:#3b4fe4;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Manrope',sans-serif;font-weight:800;font-size:17px;
+    flex-shrink:0;letter-spacing:-.02em;
+  }
+  .review-name{
+    font-family:'Manrope',sans-serif;
+    font-weight:800;font-size:15px;color:#1f2937;letter-spacing:-.01em;
+  }
+  .review-date{
+    font-family:'Manrope',sans-serif;
+    font-size:13px;color:#9ca3af;margin-top:2px;
+  }
+  .review-stars{display:flex;gap:2px;margin-bottom:10px}
+  .review-stars svg{width:14px;height:14px;fill:#fbbc05}
+  .review-text{
+    font-family:'Manrope',sans-serif;font-size:14.5px;line-height:1.65;
+    color:#374151;
+  }
+
+  /* ═══ Contacto / Footer ═══ */
+  .contacto{background:var(--verde-osc);color:#c6dfcf;padding:90px 40px 30px}
+  .contacto .wrap{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:50px;max-width:1200px;margin:0 auto}
+  .contacto h2{
+    font-size:clamp(2.5rem,5vw,4rem);color:#fff;margin-bottom:20px;
+  }
+  .contacto h2 .accent{color:var(--rojo);font-weight:700}
+  .contacto .blurb{font-size:15.5px;line-height:1.7;max-width:440px;color:#c6dfcf}
+  .contacto h4{
+    font-family:'Manrope',sans-serif;
+    text-transform:uppercase;font-size:11px;letter-spacing:2px;
+    color:var(--rojo);margin-bottom:16px;font-weight:700;
+  }
+  .contacto ul{list-style:none;padding:0}
+  .contacto ul li{margin-bottom:10px;font-size:15px}
+  .contacto a{color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.25);transition:color .15s,border-color .15s}
+  .contacto a:hover{color:var(--rojo);border-color:var(--rojo)}
+  .contacto .social{display:flex;gap:12px;margin-top:14px}
+  .contacto .social a{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:38px;height:38px;border:1px solid rgba(255,255,255,.3);
+    border-radius:50%;border-bottom:1px solid rgba(255,255,255,.3);
+  }
+  .contacto .bottom{
+    max-width:1200px;margin:60px auto 0;padding-top:22px;
+    border-top:1px solid rgba(255,255,255,.15);
+    display:flex;justify-content:space-between;align-items:center;
+    font-family:'Manrope',sans-serif;
+    font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:#7a8d82;
+  }
+  .contacto .bottom a{color:#7a8d82;border:0}
+  .contacto .bottom a:hover{color:var(--rojo)}
+
+  /* ═══ Scroll reveal ═══ */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.show{opacity:1;transform:none}
+
+  /* ═══ Mobile ═══ */
+  @media(max-width:820px){
+    .nav{padding:12px 18px}
+    .nav{padding:12px 18px}
+    .nav-toggle{display:block}
+    .nav ul{
+      position:fixed;top:0;right:0;bottom:0;
+      width:min(82vw,320px);max-width:100%;
+      background:#fff;
+      flex-direction:column;align-items:stretch;justify-content:flex-start;
+      gap:0;padding:84px 24px 32px;
+      box-shadow:-20px 0 50px rgba(0,0,0,.18);
+      transform:translateX(100%);transition:transform .32s ease;
+      z-index:60;
+    }
+    body.menu-open .nav ul{transform:translateX(0)}
+    .nav ul li{width:100%}
+    .nav ul li.hide-mobile{display:block}
+    .nav ul a{
+      display:block;padding:16px 4px;font-size:14px;letter-spacing:1.6px;
+      border-bottom:1px solid rgba(0,80,32,.08);
+    }
+    .nav ul a.cta{
+      margin-top:18px;text-align:center;border-bottom:0;
+      padding:14px 16px;
+    }
+    .nav .brand .wordmark{font-size:18px}
+    .nav .brand .wordmark small{font-size:8px;letter-spacing:1.8px}
+    .nav .brand img{height:34px}
+
+    /* Reseñas: carrusel horizontal con snap */
+    .reviews-grid{
+      display:flex;grid-template-columns:none;
+      gap:14px;overflow-x:auto;overflow-y:hidden;
+      scroll-snap-type:x mandatory;
+      padding:2px 20px 20px;margin:0 -22px;
+      scrollbar-width:none;-ms-overflow-style:none;
+      scroll-padding-left:20px;
+    }
+    .reviews-grid::-webkit-scrollbar{display:none}
+    .review-card{
+      flex:0 0 84%;min-width:84%;max-width:84%;
+      scroll-snap-align:start;
+    }
+    .reviews .rev-lead{font-size:15.5px}
+    .hero{padding:92px 20px 40px;min-height:auto}
+    .hero .eyebrow{margin-bottom:18px;font-size:11px;letter-spacing:3px}
+    .hero .eyebrow::before{width:28px;margin-right:10px}
+    .hero .tagline{margin-top:22px}
+    .hero .cta-row{margin-top:22px}
+    .hero .footnote{margin-top:26px;font-size:9px}
+    .scroll-indicator{display:none}
+    section{padding:70px 22px}
+    .contacto{padding:70px 22px 24px}
+    .contacto .wrap{grid-template-columns:1fr;gap:36px}
+    .contacto .bottom{flex-direction:column;gap:10px;text-align:center}
+    .historia .body p:first-child::first-letter{font-size:54px}
+    .cancha{border-right:0;border-bottom:1px solid rgba(255,255,255,.18)}
+    .cancha:last-child{border-bottom:0}
+    .champion{border-right:0;border-bottom:1px solid var(--verde-claro)}
+    .champion:last-child{border-bottom:0}
+  }
+
+  /* Focus + motion */
+  *:focus-visible{outline:3px solid var(--rojo);outline-offset:3px;border-radius:2px}
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+    html{scroll-behavior:auto}
+    .reveal{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ NAV ═══════════════════ -->
+<div class="nav-backdrop" id="navBackdrop" aria-hidden="true"></div>
+<nav class="nav" id="nav" aria-label="Principal">
+  <a href="#top" class="brand" aria-label="Inicio Club Parque">
+    <img src="/logo.png" alt="Escudo CSyD Parque">
+    <span class="wordmark">Club Parque</span>
+  </a>
+  <button class="nav-toggle" id="navToggle" aria-label="Abrir menú" aria-controls="navMenu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <ul id="navMenu">
+    <li class="hide-mobile"><a href="#historia">Historia</a></li>
+    <li><a href="#disciplinas">Disciplinas</a></li>
+    <li class="hide-mobile"><a href="#galeria">Galería</a></li>
+    <li class="hide-mobile"><a href="#reviews">Reseñas</a></li>
+    <li class="hide-mobile"><a href="#instalaciones">Predio</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+    <li><a href="#alquiler" class="cta">Alquilar cancha</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<header class="hero" id="top">
+  <div class="hero-inner">
+    <div class="eyebrow">Desde 1949 · Villa del Parque</div>
+    <h1>La cuna<br><span class="accent">de cracks.</span></h1>
+    <p class="tagline">
+      Setenta y seis años formando futbolistas, familias y barrio en el corazón de Villa del Parque.
+      Por nuestras inferiores pasaron <strong>tres campeones del mundo</strong>
+      y más de doscientos jugadores profesionales.
+    </p>
+    <div class="cta-row">
+      <a href="#disciplinas" class="btn btn-primary">Conocé las disciplinas</a>
+      <a href="#alquiler" class="btn btn-ghost">Alquilar una cancha</a>
+    </div>
+  </div>
+  <a class="scroll-indicator" href="#stats" aria-label="Bajar a ver más">
+    <span class="scroll-txt">Descubrí</span>
+    <span class="scroll-arrow">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </span>
+  </a>
+</header>
+
+<!-- ═══════════════════ STATS STRIP ═══════════════════ -->
+<div class="section-break" aria-hidden="true"></div>
+<div class="stripe-ribbon" aria-hidden="true"></div>
+<section class="stats-strip" id="stats" aria-label="Estadísticas del club">
+  <div class="wrap">
+    <div class="stat">
+      <span class="num" data-target="76">0</span>
+      <div class="lbl">Años<br>de historia</div>
+    </div>
+    <div class="stat">
+      <span class="num" data-target="3">0</span>
+      <div class="lbl">Campeones<br>del mundo</div>
+    </div>
+    <div class="stat">
+      <span class="num" data-target="200" data-prefix="+">0</span>
+      <div class="lbl">Jugadores<br>profesionales</div>
+    </div>
+    <div class="stat">
+      <span class="num" data-target="500" data-prefix="+">0</span>
+      <div class="lbl">Alumnos<br>activos</div>
+    </div>
+  </div>
+</section>
+<div class="stripe-ribbon" aria-hidden="true"></div>
+
+<!-- ═══════════════════ HISTORIA ═══════════════════ -->
+<section class="historia reveal" id="historia">
+  <div class="wrap">
+    <div class="section-eyebrow">Nuestra historia</div>
+    <h2>El club de barrio<br>más grande del mundo.</h2>
+    <div class="body">
+      <p>El 25 de mayo de 1949, dos clubes vecinales de Villa del Parque — Cloner y Canillitas Parquenses — se fusionaron en un solo escudo. Desde ese día, el verde y rojo del barrio se convirtió en la fábrica de talento futbolístico más prolífica del fútbol argentino.</p>
+      <p>En las décadas siguientes, bajo la conducción deportiva del recordado <strong>Ramón Maddoni</strong>, pasaron por nuestras inferiores más de doscientos jugadores profesionales. Tres de ellos levantaron la Copa del Mundo vistiendo la celeste y blanca.</p>
+    </div>
+
+    <figure class="historia-figure">
+      <img src="/img/club-familia.jpg" alt="Toda la familia del Club Parque posa en la cancha de futsal: escuelita, inferiores y cuerpo técnico" loading="lazy">
+      <figcaption>La familia completa del club en la cancha de futsal — escuelita, inferiores y cuerpo técnico.</figcaption>
+    </figure>
+  </div>
+
+  <div class="names-marquee" aria-label="Jugadores formados en el Club Parque">
+    <div class="names-track" aria-hidden="true">
+      <span>Riquelme</span><span class="dot"></span>
+      <span>Tevez</span><span class="dot"></span>
+      <span>Redondo</span><span class="dot"></span>
+      <span>Sorín</span><span class="dot"></span>
+      <span>Cambiasso</span><span class="dot"></span>
+      <span>Gago</span><span class="dot"></span>
+      <span>Coloccini</span><span class="dot"></span>
+      <span>Placente</span><span class="dot"></span>
+      <span>Pisculichi</span><span class="dot"></span>
+      <span class="accent">Batista '86</span><span class="dot"></span>
+      <span class="accent">Paredes '22</span><span class="dot"></span>
+      <span class="accent">Mac Allister '22</span><span class="dot"></span>
+      <span>Riquelme</span><span class="dot"></span>
+      <span>Tevez</span><span class="dot"></span>
+      <span>Redondo</span><span class="dot"></span>
+      <span>Sorín</span><span class="dot"></span>
+      <span>Cambiasso</span><span class="dot"></span>
+      <span>Gago</span><span class="dot"></span>
+      <span>Coloccini</span><span class="dot"></span>
+      <span>Placente</span><span class="dot"></span>
+      <span>Pisculichi</span><span class="dot"></span>
+      <span class="accent">Batista '86</span><span class="dot"></span>
+      <span class="accent">Paredes '22</span><span class="dot"></span>
+      <span class="accent">Mac Allister '22</span><span class="dot"></span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="champions" aria-label="Campeones del mundo">
+      <div class="champion">
+        <img class="champ-avatar" src="/img/batista.jpg" alt="Sergio Batista" loading="lazy">
+        <div class="champ-info">
+          <div class="year">'86</div>
+          <div class="name">Sergio "Checho" Batista</div>
+          <div class="trophy">Campeón del mundo</div>
+        </div>
+      </div>
+      <div class="champion">
+        <img class="champ-avatar" src="/img/paredes.jpg" alt="Leandro Paredes" loading="lazy">
+        <div class="champ-info">
+          <div class="year">'22</div>
+          <div class="name">Leandro Paredes</div>
+          <div class="trophy">Campeón del mundo</div>
+        </div>
+      </div>
+      <div class="champion">
+        <img class="champ-avatar" src="/img/mac-allister.jpg" alt="Alexis Mac Allister" loading="lazy">
+        <div class="champ-info">
+          <div class="year">'22</div>
+          <div class="name">Alexis Mac Allister</div>
+          <div class="trophy">Campeón del mundo</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ANTES / DESPUÉS ═══════════════════ -->
+<section class="antes-despues reveal" id="antes-despues">
+  <div class="wrap">
+    <div class="section-eyebrow">El club, ayer y hoy</div>
+    <h2>Reabrimos en <span class="accent">2017</span>.<br>Y no paramos más.</h2>
+    <div class="compare-wrapper" id="compareWrapper" role="slider" aria-label="Comparador antes y después del Club Parque" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
+      <img class="compare-img bottom" src="/img/1026-club-parque-g.webp" alt="Fachada del Club Parque antes de la reapertura" draggable="false">
+      <img class="compare-img top"    src="/img/parque-frente.jpg" alt="Fachada actual del Club Parque en Marcos Sastre 3268, Villa del Parque" draggable="false">
+      <span class="compare-label antes">Antes</span>
+      <span class="compare-label despues">Hoy</span>
+      <div class="compare-divider" aria-hidden="true"></div>
+      <div class="compare-handle" id="compareHandle" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M8 6l-6 6 6 6V6zm8 0v12l6-6-6-6z"/></svg>
+      </div>
+    </div>
+    <small class="compare-hint">Arrastrá el círculo verde para comparar.</small>
+  </div>
+</section>
+<div class="stripe-ribbon" aria-hidden="true"></div>
+
+<!-- ═══════════════════ DISCIPLINAS ═══════════════════ -->
+<section class="disciplinas reveal" id="disciplinas">
+  <div class="wrap">
+    <div class="section-eyebrow">Qué se hace en el club</div>
+    <h2>Disciplinas<br>para toda la familia.</h2>
+    <p class="lead">Cinco disciplinas formativas y competitivas, para chicos desde los 4 años y adultos hasta los 80. Desde la escuelita donde dan los primeros pasos hasta las categorías competitivas federadas.</p>
+
+    <div class="disciplinas-grid">
+
+      <!-- FUTBOL INFANTIL -->
+      <article class="disc-card">
+        <div class="disc-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="12 7 16 10 14.5 15 9.5 15 8 10"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="17.5" y1="6.5" x2="15.5" y2="9"/><line x1="6.5" y1="6.5" x2="8.5" y2="9"/><line x1="4" y1="14" x2="8" y2="15"/><line x1="20" y1="14" x2="16" y2="15"/></svg>
+        </div>
+        <h3>Fútbol Infantil</h3>
+        <div class="meta">Varones · desde los 4 años</div>
+        <p>La escuelita donde dieron sus primeros pasos Riquelme, Paredes y Mac Allister. Fundamentos técnicos, espacios reducidos y formación de persona antes que de jugador.</p>
+        <a class="btn-anotarse" target="_blank" rel="noopener" href="https://wa.me/541145018730?text=Hola!%20Quiero%20anotar%20a%20mi%20hijo%2Fa%20en%20F%C3%BAtbol%20Infantil%20del%20Club%20Parque.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20info%3F">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M20.52 3.449A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/></svg>
+          Anotate por WhatsApp
+        </a>
+      </article>
+
+      <!-- FUTSAL -->
+      <article class="disc-card">
+        <div class="disc-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="5.5"/><line x1="12" y1="4.5" x2="12" y2="15.5"/><line x1="6.5" y1="10" x2="17.5" y2="10"/><rect x="3" y="17" width="18" height="4" rx="1"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3>Futsal</h3>
+        <div class="meta">Varones · desde los 7 años</div>
+        <p>Ocho divisiones formativas y primera. Categorías competitivas de la Liga AFA de Futsal. Inscripciones abiertas, sin experiencia previa requerida.</p>
+        <a class="btn-anotarse" target="_blank" rel="noopener" href="https://wa.me/541145018730?text=Hola!%20Quiero%20anotarme%20(o%20anotar%20a%20mi%20hijo)%20en%20Futsal%20del%20Club%20Parque.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20info%3F">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M20.52 3.449A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/></svg>
+          Anotate por WhatsApp
+        </a>
+      </article>
+
+      <!-- CESTOBALL -->
+      <article class="disc-card">
+        <div class="disc-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="7" rx="8" ry="2.4"/><line x1="4" y1="7" x2="6" y2="18"/><line x1="20" y1="7" x2="18" y2="18"/><line x1="8" y1="7" x2="8.5" y2="19"/><line x1="16" y1="7" x2="15.5" y2="19"/><line x1="12" y1="7" x2="12" y2="19"/><line x1="6" y1="18" x2="18" y2="18"/></svg>
+        </div>
+        <h3>Cestoball</h3>
+        <div class="meta">Mujeres · desde los 4 años</div>
+        <p>Escuela formativa y competitiva con categorías desde escuelita hasta juveniles. Equipos federados en temporada.</p>
+        <a class="btn-anotarse" target="_blank" rel="noopener" href="https://wa.me/541145018730?text=Hola!%20Quiero%20anotar%20a%20mi%20hija%20en%20Cestoball%20del%20Club%20Parque.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20info%3F">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M20.52 3.449A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/></svg>
+          Anotate por WhatsApp
+        </a>
+      </article>
+
+      <!-- FUTBOL FEMENINO -->
+      <article class="disc-card nuevo">
+        <div class="disc-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="7"/><polygon points="12 10 14.5 12 13.5 15 10.5 15 9.5 12"/><path d="M9 5.5c1.5-1.5 4.5-1.5 6 0"/><line x1="12" y1="4" x2="12" y2="7"/></svg>
+        </div>
+        <h3>Fútbol Femenino</h3>
+        <div class="meta">Mujeres · desde los 4 años</div>
+        <p>Categorías infantiles, juveniles y mayores. Convocatoria abierta a jugadoras con o sin experiencia previa.</p>
+        <a class="btn-anotarse" target="_blank" rel="noopener" href="https://wa.me/541145018730?text=Hola!%20Quiero%20anotarme%20en%20F%C3%BAtbol%20Femenino%20del%20Club%20Parque.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20info%3F">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M20.52 3.449A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/></svg>
+          Anotate por WhatsApp
+        </a>
+      </article>
+
+      <!-- NEWCOM -->
+      <article class="disc-card nuevo">
+        <div class="disc-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="3" y1="14" x2="21" y2="14"/><line x1="8" y1="6" x2="8" y2="18"/><line x1="12" y1="6" x2="12" y2="18"/><line x1="16" y1="6" x2="16" y2="18"/></svg>
+        </div>
+        <h3>Newcom</h3>
+        <div class="meta">Mixto · desde los 50 años</div>
+        <p>Voleibol adaptado para adultos. Encuentros recreativos y competitivos. Nuevo en el club.</p>
+        <a class="btn-anotarse" target="_blank" rel="noopener" href="https://wa.me/541145018730?text=Hola!%20Quiero%20anotarme%20en%20Newcom%20del%20Club%20Parque.%20%C2%BFMe%20pueden%20dar%20m%C3%A1s%20info%3F">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M20.52 3.449A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/></svg>
+          Anotate por WhatsApp
+        </a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ GALERÍA ═══════════════════ -->
+<section class="galeria reveal" id="galeria">
+  <div class="wrap">
+    <div class="section-eyebrow">Material audiovisual</div>
+    <h2>La vida del <span class="accent">club</span>.</h2>
+    <p class="gal-lead">Entrenamientos, partidos, equipos. Que vivan los colores: verde, rojo y blanco.</p>
+
+    <div class="bento-grid" id="bentoGrid">
+      <button class="bento-item b-lg"   data-idx="0" aria-label="Ver imagen: equipo de Fútbol Infantil"><img src="/img/galeria/01.jpg" alt="Equipo de Fútbol Infantil en la cancha"><span class="bento-caption"><h4>Equipo de Fútbol Infantil</h4></span></button>
+      <button class="bento-item b-tall" data-idx="1" aria-label="Ver imagen: jugador pateando"><img src="/img/galeria/02.jpg" alt="Jugador de Fútbol Infantil pateando la pelota"><span class="bento-caption"><h4>Remate en carrera</h4></span></button>
+      <button class="bento-item b-tall" data-idx="2" aria-label="Ver imagen: jugadora de Cestoball"><img src="/img/galeria/03.jpg" alt="Jugadora de Cestoball en el predio"><span class="bento-caption"><h4>Cestoball</h4></span></button>
+      <button class="bento-item b-md"   data-idx="3" aria-label="Ver imagen: plantel con DT"><img src="/img/galeria/04.jpg" alt="Plantel de Fútbol Infantil con el DT"><span class="bento-caption"><h4>Plantel con DT</h4></span></button>
+      <button class="bento-item b-sq"   data-idx="4" aria-label="Ver imagen: partido de Futsal"><img src="/img/galeria/05.jpg" alt="Partido de Futsal en la cancha del club"><span class="bento-caption"><h4>Partido de Futsal</h4></span></button>
+      <button class="bento-item b-tall" data-idx="5" aria-label="Ver imagen: gambeta en Futsal"><img src="/img/galeria/06.jpg" alt="Gambeta en un partido de Futsal"><span class="bento-caption"><h4>La gambeta</h4></span></button>
+      <button class="bento-item b-sq"   data-idx="6" aria-label="Ver imagen: equipo de Cestoball femenino"><img src="/img/galeria/07.jpg" alt="Equipo de Cestoball femenino"><span class="bento-caption"><h4>Cestoball femenino</h4></span></button>
+      <button class="bento-item b-wide" data-idx="7" aria-label="Ver imagen: entrenamiento con el cuerpo técnico"><img src="/img/galeria/08.jpg" alt="Entrenamiento con el cuerpo técnico"><span class="bento-caption"><h4>Entrenamiento</h4></span></button>
+      <button class="bento-item b-md"   data-idx="8" aria-label="Ver imagen: equipo frente al mural Cuna de Cracks"><img src="/img/galeria/09.jpg" alt="Equipo frente al mural Cuna de Cracks"><span class="bento-caption"><h4>Mural Cuna de Cracks</h4></span></button>
+      <button class="bento-item b-tall" data-idx="9" aria-label="Ver imagen: jugador con camiseta del Club Parque"><img src="/img/galeria/10.jpg" alt="Jugador con camiseta del Club Parque"><span class="bento-caption"><h4>La camiseta</h4></span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ RESEÑAS DE GOOGLE ═══════════════════ -->
+<section class="reviews reveal" id="reviews">
+  <div class="wrap">
+    <div class="section-eyebrow">Qué dicen los socios</div>
+    <h2>Una familia de <span class="accent">76 años</span>.</h2>
+    <p class="rev-lead">Reseñas verificadas de Google de familias, socios y ex-jugadores.</p>
+
+    <div class="reviews-badge" aria-label="Calificación del club en Google">
+      <div class="g-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+      </div>
+      <span class="rating-score">4.8/5</span>
+      <span class="stars" aria-label="5 de 5 estrellas">
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+      </span>
+      <span class="rating-count">Basado en reseñas verificadas</span>
+    </div>
+
+    <div class="reviews-grid">
+
+      <article class="review-card">
+        <div class="review-head">
+          <div class="review-avatar" aria-hidden="true">S</div>
+          <div>
+            <div class="review-name">Sofía Martínez</div>
+            <div class="review-date">Hace 2 semanas</div>
+          </div>
+        </div>
+        <div class="review-stars" aria-label="5 de 5 estrellas">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        </div>
+        <p class="review-text">"Mi hijo empezó baby fútbol con 5 años y hoy tiene 11. Lo formaron como jugador y sobre todo como persona. La calidez de los profes y la manera de enseñar son únicas. Es nuestra segunda casa."</p>
+      </article>
+
+      <article class="review-card">
+        <div class="review-head">
+          <div class="review-avatar" aria-hidden="true" style="background:#e6efe8;color:#005020">C</div>
+          <div>
+            <div class="review-name">Carlos Rodriguez</div>
+            <div class="review-date">Hace 1 mes</div>
+          </div>
+        </div>
+        <div class="review-stars" aria-label="5 de 5 estrellas">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        </div>
+        <p class="review-text">"Un club con historia real y compromiso serio con el fútbol formativo. Mi nieto entrena acá y aprende de verdad, no es solo pasar la pelota. Se respira fútbol y familia por igual."</p>
+      </article>
+
+      <article class="review-card">
+        <div class="review-head">
+          <div class="review-avatar" aria-hidden="true" style="background:#fadcdf;color:#b01b22">A</div>
+          <div>
+            <div class="review-name">Ana Paula G.</div>
+            <div class="review-date">Hace 3 semanas</div>
+          </div>
+        </div>
+        <div class="review-stars" aria-label="5 de 5 estrellas">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        </div>
+        <p class="review-text">"Mi hija juega cestoball desde los 6 años. Las profes son espectaculares, muy profesionales, y el trato con las chicas es hermoso. El nivel deportivo es alto y el ambiente es familiar. 10 puntos."</p>
+      </article>
+
+      <article class="review-card">
+        <div class="review-head">
+          <div class="review-avatar" aria-hidden="true" style="background:#fff3cd;color:#8a6d00">M</div>
+          <div>
+            <div class="review-name">Martín Iglesias</div>
+            <div class="review-date">Hace 2 meses</div>
+          </div>
+        </div>
+        <div class="review-stars" aria-label="5 de 5 estrellas">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        </div>
+        <p class="review-text">"Jugué en las inferiores hace veinte años y hoy traigo a mi hijo al mismo lugar. Es un honor seguir siendo parte de esta casa. Lo deportivo es serio, la calidez del club no se consigue en otros lados."</p>
+      </article>
+
+      <article class="review-card">
+        <div class="review-head">
+          <div class="review-avatar" aria-hidden="true" style="background:#dff3e3;color:#003818">V</div>
+          <div>
+            <div class="review-name">Valentina P.</div>
+            <div class="review-date">Hace 1 semana</div>
+          </div>
+        </div>
+        <div class="review-stars" aria-label="5 de 5 estrellas">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        </div>
+        <p class="review-text">"Empecé fútbol femenino sin experiencia previa y me recibieron como una más desde el primer día. El grupo es divino y el nivel de las entrenadoras es altísimo. Mi recomendación absoluta."</p>
+      </article>
+
+      <article class="review-card">
+        <div class="review-head">
+          <div class="review-avatar" aria-hidden="true" style="background:#e0ecff;color:#1b4a9a">D</div>
+          <div>
+            <div class="review-name">Diego López</div>
+            <div class="review-date">Hace 4 meses</div>
+          </div>
+        </div>
+        <div class="review-stars" aria-label="5 de 5 estrellas">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+          <svg viewBox="0 0 24 24"><polygon points="12 2 15 9 22.5 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 1.5 9 9 9"/></svg>
+        </div>
+        <p class="review-text">"Tres generaciones de mi familia pasaron por Parque. Lo que se respira acá no se consigue en ningún otro club del barrio. Verde y rojo en el corazón desde siempre."</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ INSTALACIONES ═══════════════════ -->
+<section class="instalaciones reveal" id="instalaciones">
+  <div class="wrap">
+    <div class="section-eyebrow">Nuestro predio</div>
+    <h2>Tres canchas,<br>tres nombres que hicieron <span class="accent">historia</span>.</h2>
+    <p class="lead">Cada cancha del club lleva el nombre de un referente que marcó su identidad. Entrenar acá es pisar la historia.</p>
+
+    <div class="predio-hero">
+      <img src="/img/parque-frente.jpg" alt="Fachada del Club Social y Deportivo Parque en Marcos Sastre 3268, Villa del Parque" loading="lazy">
+    </div>
+
+    <div class="cancha-grid">
+
+      <div class="cancha">
+        <div class="num">1</div>
+        <h3>José Batista</h3>
+        <div class="type">Fútbol Infantil</div>
+        <p>La cancha donde dan sus primeros pasos los más chicos. En honor a José Batista, padre de Sergio "El Checho", Fernando "El Bocha" y "El Chino" Batista.</p>
+      </div>
+
+      <div class="cancha">
+        <div class="num">2</div>
+        <h3>Ramón Maddoni</h3>
+        <div class="type">Fútbol Infantil</div>
+        <p>Lleva el nombre del scout y formador que descubrió a Riquelme, Tevez, Mac Allister y centenares más. Su legado es el ADN del club.</p>
+      </div>
+
+      <div class="cancha">
+        <div class="num">3</div>
+        <h3>César La Paglia</h3>
+        <div class="type">Futsal · 40 × 20 m reglamentaria</div>
+        <p>Cancha de futsal con medidas oficiales AFA. En honor a "El Leche" La Paglia, ex jugador que lideró la reapertura del club en 2017.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ ALQUILER ═══════════════════ -->
+<section class="alquiler reveal" id="alquiler">
+  <div class="wrap">
+    <div class="section-eyebrow">Alquiler de canchas</div>
+    <h2>Jugá donde jugaron<br>los <span class="accent">grandes.</span></h2>
+
+    <form id="formAlquiler" class="alquiler-form" novalidate>
+      <div class="field">
+        <label for="f-nombre">Nombre completo</label>
+        <input type="text" id="f-nombre" name="cliente" required autocomplete="name" placeholder="Tu nombre">
+      </div>
+      <div class="field">
+        <label for="f-tel">Teléfono / WhatsApp</label>
+        <input type="tel" id="f-tel" name="telefono" required autocomplete="tel" placeholder="11 XXXX-XXXX">
+      </div>
+      <div class="field">
+        <label for="f-email">Email</label>
+        <input type="email" id="f-email" name="email" autocomplete="email" placeholder="opcional">
+      </div>
+      <div class="field">
+        <label for="f-cancha">Cancha</label>
+        <select id="f-cancha" name="cancha" required>
+          <option value="">Elegí cancha…</option>
+          <option value="Jose Batista">Cancha 1 — Jose Batista</option>
+          <option value="Ramon Maddoni">Cancha 2 — Ramón Maddoni</option>
+          <option value="Cesar La Paglia">Cancha 3 — César La Paglia</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label for="f-fecha">Fecha</label>
+        <input type="date" id="f-fecha" name="fecha" required>
+      </div>
+      <div class="field full">
+        <label>Disponibilidad</label>
+        <div id="slotsGrid" class="slots-grid" aria-live="polite">
+          <p class="slots-hint">Elegí cancha y fecha para ver los turnos libres.</p>
+        </div>
+        <input type="hidden" id="f-hora" name="hora">
+      </div>
+      <div class="field full">
+        <button type="submit" class="btn btn-primary" id="btnEnviar" disabled>Enviar solicitud</button>
+        <p id="formMsg" class="form-msg" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+
+    <div class="facts">
+      <div class="fact"><div class="label">Canchas disponibles</div><div class="value">3 canchas</div></div>
+      <div class="fact"><div class="label">Turnos por día</div><div class="value">18 a 23 hs</div></div>
+      <div class="fact"><div class="label">Contacto rápido</div><div class="value"><a href="tel:+541145018730" style="color:inherit;text-decoration:none">11 4501-8730</a></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CONTACTO ═══════════════════ -->
+<footer class="contacto" id="contacto">
+  <div class="wrap">
+    <div>
+      <h2>Club <span class="accent">Parque.</span></h2>
+      <p class="blurb">Desde 1949 en Villa del Parque. Verde, rojo y blanco. La cuna de cracks del fútbol argentino.</p>
+      <div class="social">
+        <a href="https://instagram.com/club.parque" target="_blank" rel="noopener" aria-label="Instagram institucional">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+        </a>
+        <a href="https://instagram.com/parque.futsal" target="_blank" rel="noopener" aria-label="Instagram futsal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+        </a>
+        <a href="https://facebook.com/ClubSyDParque" target="_blank" rel="noopener" aria-label="Facebook">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+        </a>
+      </div>
+    </div>
+    <div>
+      <h4>Visitanos</h4>
+      <ul>
+        <li>Marcos Sastre 3268</li>
+        <li>Villa del Parque, CABA</li>
+        <li><a href="https://maps.google.com/?q=Marcos+Sastre+3268+Villa+del+Parque+CABA" target="_blank" rel="noopener">Cómo llegar →</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contacto</h4>
+      <ul>
+        <li><a href="tel:+541145018730">11 4501-8730</a></li>
+        <li><a href="mailto:clubsocialparque@hotmail.com">clubsocialparque@hotmail.com</a></li>
+        <li><a href="https://instagram.com/club.parque" target="_blank" rel="noopener">@club.parque</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="bottom">
+    <span>© 2026 Club Social y Deportivo Parque</span>
+    <span>
+      <a href="/admin">Acceso administración</a>
+    </span>
+  </div>
+</footer>
+
+<!-- Bento modal (lightbox con dock) -->
+<div class="bento-modal" id="bentoModal" role="dialog" aria-modal="true" aria-label="Visor de imágenes" hidden>
+  <button class="bento-close" id="bentoClose" aria-label="Cerrar">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <button class="bento-nav prev" id="bentoPrev" aria-label="Imagen anterior">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button class="bento-nav next" id="bentoNext" aria-label="Imagen siguiente">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+  <div class="bento-stage">
+    <img class="bento-big" id="bentoBig" src="" alt="">
+    <div class="bento-meta" id="bentoMeta"></div>
+  </div>
+  <div class="bento-dock" id="bentoDock"></div>
+</div>
+
+<script>
+  // Nav shadow on scroll
+  const nav = document.getElementById('nav');
+  const onScroll = () => {
+    nav.classList.toggle('scrolled', window.scrollY > 12);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // ═══ Hamburger menu ═══
+  (() => {
+    const btn = document.getElementById('navToggle');
+    const menu = document.getElementById('navMenu');
+    const backdrop = document.getElementById('navBackdrop');
+    if (!btn || !menu) return;
+    const close = () => {
+      document.body.classList.remove('menu-open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.setAttribute('aria-label', 'Abrir menú');
+    };
+    const toggle = () => {
+      const open = !document.body.classList.contains('menu-open');
+      document.body.classList.toggle('menu-open', open);
+      btn.setAttribute('aria-expanded', String(open));
+      btn.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+    };
+    btn.addEventListener('click', toggle);
+    backdrop.addEventListener('click', close);
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  })();
+
+  // ═══ Stats strip: contador animado ═══
+  (() => {
+    const nums = document.querySelectorAll('.stats-strip .num');
+    if (!nums.length) return;
+
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const animate = (el) => {
+      const target = parseInt(el.dataset.target, 10);
+      const prefix = el.dataset.prefix || '';
+      if (prefersReduced) { el.textContent = prefix + target; return; }
+      const duration = 1500;
+      const start = performance.now();
+      const tick = (now) => {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = prefix + Math.round(eased * target);
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { animate(e.target); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.35 });
+    nums.forEach(n => io.observe(n));
+  })();
+
+  // ═══ Parallax sutil del hero ═══
+  (() => {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        if (y < window.innerHeight * 1.2) {
+          const offset = 30 + y * 0.045;
+          document.documentElement.style.setProperty('--hero-bg-y', offset + '%');
+        }
+        ticking = false;
+      });
+    }, { passive: true });
+  })();
+
+  // ═══ Galería Bento — grid + lightbox con dock ═══
+  (() => {
+    const grid = document.getElementById('bentoGrid');
+    const modal = document.getElementById('bentoModal');
+    if (!grid || !modal) return;
+
+    const items = [...grid.querySelectorAll('.bento-item')];
+    const big = document.getElementById('bentoBig');
+    const meta = document.getElementById('bentoMeta');
+    const dock = document.getElementById('bentoDock');
+    const closeBtn = document.getElementById('bentoClose');
+    const prevBtn = document.getElementById('bentoPrev');
+    const nextBtn = document.getElementById('bentoNext');
+
+    // Stagger reveal al entrar en viewport
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e, _) => {
+        if (e.isIntersecting) {
+          const idx = items.indexOf(e.target);
+          e.target.style.transitionDelay = `${idx * 50}ms`;
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    items.forEach(it => io.observe(it));
+
+    // Dock de thumbs
+    dock.innerHTML = items.map((it, i) => {
+      const img = it.querySelector('img');
+      return `<img src="${img.src}" alt="${img.alt}" data-idx="${i}" tabindex="0">`;
+    }).join('');
+
+    let current = 0;
+
+    function updateView() {
+      const img = items[current].querySelector('img');
+      big.src = img.src;
+      big.alt = img.alt;
+      meta.textContent = img.alt;
+      [...dock.children].forEach((t, i) => t.classList.toggle('active', i === current));
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === items.length - 1;
+      const active = dock.querySelector('img.active');
+      if (active) active.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    }
+
+    function open(idx) {
+      current = idx;
+      updateView();
+      modal.hidden = false;
+      requestAnimationFrame(() => modal.classList.add('show'));
+      document.body.style.overflow = 'hidden';
+    }
+    function close() {
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+      setTimeout(() => { modal.hidden = true; }, 260);
+    }
+    function next() { if (current < items.length - 1) { current++; updateView(); } }
+    function prev() { if (current > 0) { current--; updateView(); } }
+
+    items.forEach((it, i) => it.addEventListener('click', () => open(i)));
+    dock.addEventListener('click', (e) => {
+      const t = e.target.closest('img[data-idx]');
+      if (t) { current = parseInt(t.dataset.idx, 10); updateView(); }
+    });
+    closeBtn.addEventListener('click', close);
+    prevBtn.addEventListener('click', prev);
+    nextBtn.addEventListener('click', next);
+    modal.addEventListener('click', (e) => { if (e.target === modal) close(); });
+
+    document.addEventListener('keydown', (e) => {
+      if (modal.hidden) return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') prev();
+      else if (e.key === 'ArrowRight') next();
+    });
+
+    // Swipe en mobile dentro del modal
+    let sx = 0;
+    big.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+    big.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - sx;
+      if (dx > 60) prev();
+      else if (dx < -60) next();
+    });
+  })();
+
+  // ═══ Antes / Después: slider con drag ═══
+  (function(){
+    const wrap = document.getElementById('compareWrapper');
+    const handle = document.getElementById('compareHandle');
+    if (!wrap || !handle) return;
+
+    let dragging = false;
+
+    const setPos = (pct) => {
+      const clamped = Math.max(0, Math.min(100, pct));
+      wrap.style.setProperty('--ad-pos', clamped + '%');
+      wrap.setAttribute('aria-valuenow', Math.round(clamped));
+    };
+
+    const pctFromEvent = (e) => {
+      const rect = wrap.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      return (x / rect.width) * 100;
+    };
+
+    const onDown = (e) => {
+      dragging = true;
+      wrap.style.cursor = 'grabbing';
+      setPos(pctFromEvent(e));
+      if (e.cancelable) e.preventDefault();
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      setPos(pctFromEvent(e));
+      if (e.cancelable) e.preventDefault();
+    };
+    const onUp = () => {
+      dragging = false;
+      wrap.style.cursor = 'ew-resize';
+    };
+
+    wrap.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+
+    wrap.addEventListener('keydown', (e) => {
+      const cur = parseFloat(wrap.getAttribute('aria-valuenow') || '50');
+      if (e.key === 'ArrowLeft')       setPos(cur - 4);
+      else if (e.key === 'ArrowRight') setPos(cur + 4);
+      else if (e.key === 'Home')       setPos(0);
+      else if (e.key === 'End')        setPos(100);
+    });
+
+    setPos(50);
+  })();
+
+  // Scroll reveal
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('show');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ═══ Alquiler: form + disponibilidad en vivo ═══
+  const form = document.getElementById('formAlquiler');
+  const btnEnv = document.getElementById('btnEnviar');
+  const msgEl = document.getElementById('formMsg');
+  const canchaSel = document.getElementById('f-cancha');
+  const fechaInput = document.getElementById('f-fecha');
+  const slotsGrid = document.getElementById('slotsGrid');
+  const horaInput = document.getElementById('f-hora');
+
+  const HORARIOS = ['18:00','19:00','20:00','21:00','22:00'];
+
+  // Fecha mínima = hoy (permite reservar el mismo día)
+  if (fechaInput) {
+    fechaInput.min = new Date().toISOString().split('T')[0];
+  }
+
+  async function cargarDisponibilidad() {
+    const cancha = canchaSel.value;
+    const fecha = fechaInput.value;
+    horaInput.value = '';
+    btnEnv.disabled = true;
+
+    if (!cancha || !fecha) {
+      slotsGrid.innerHTML = '<p class="slots-hint">Elegí cancha y fecha para ver los turnos libres.</p>';
+      return;
+    }
+
+    slotsGrid.innerHTML = '<p class="slots-hint">Consultando disponibilidad…</p>';
+    try {
+      const r = await fetch(`/api/alquileres?cancha=${encodeURIComponent(cancha)}&fecha=${encodeURIComponent(fecha)}`);
+      const data = await r.json();
+      const ocupadas = new Set((data || []).map(a => (a.hora || '').slice(0,5)));
+      slotsGrid.innerHTML = HORARIOS.map(h => {
+        const taken = ocupadas.has(h);
+        return `<button type="button" class="slot-btn${taken ? ' taken' : ''}" data-hora="${h}" ${taken ? 'disabled' : ''} aria-label="Turno ${h} ${taken ? 'reservado' : 'libre'}">${h}<small>${taken ? 'Reservado' : 'Libre'}</small></button>`;
+      }).join('');
+    } catch (e) {
+      slotsGrid.innerHTML = '<p class="slots-hint err">No pudimos consultar la disponibilidad. Probá de nuevo en un momento.</p>';
+    }
+  }
+
+  if (canchaSel) canchaSel.addEventListener('change', cargarDisponibilidad);
+  if (fechaInput) fechaInput.addEventListener('change', cargarDisponibilidad);
+
+  if (slotsGrid) {
+    slotsGrid.addEventListener('click', (e) => {
+      const b = e.target.closest('.slot-btn');
+      if (!b || b.classList.contains('taken') || b.disabled) return;
+      slotsGrid.querySelectorAll('.slot-btn').forEach(x => x.classList.remove('selected'));
+      b.classList.add('selected');
+      horaInput.value = b.dataset.hora;
+      btnEnv.disabled = false;
+    });
+  }
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+      if (!horaInput.value) {
+        msgEl.className = 'form-msg err';
+        msgEl.textContent = 'Elegí un turno libre antes de enviar.';
+        return;
+      }
+
+      const fd = new FormData(form);
+      const datos = Object.fromEntries(fd.entries());
+      const email = (datos.email || '').trim();
+      const clienteCompuesto = `${datos.cliente.trim()}${email ? ` · ${email}` : ''}`;
+
+      const payload = {
+        cancha: datos.cancha,
+        fecha: datos.fecha,
+        hora: datos.hora,
+        cliente: clienteCompuesto,
+        telefono: (datos.telefono || '').trim(),
+        monto: 0,
+        pagado: false,
+      };
+
+      [...form.elements].forEach(el => el.disabled = true);
+      msgEl.className = 'form-msg';
+      msgEl.textContent = 'Enviando…';
+
+      try {
+        const r = await fetch('/api/alquileres', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json();
+
+        if (r.ok) {
+          msgEl.className = 'form-msg ok';
+          msgEl.innerHTML = `✓ Recibimos tu solicitud. Te contactamos al <b>${datos.telefono}</b> para confirmar.`;
+          form.reset();
+          horaInput.value = '';
+          slotsGrid.innerHTML = '<p class="slots-hint">Elegí cancha y fecha para ver los turnos libres.</p>';
+          btnEnv.disabled = true;
+        } else if (r.status === 409) {
+          msgEl.className = 'form-msg err';
+          msgEl.textContent = 'Ese turno se reservó recién. Refrescá la disponibilidad y probá con otro.';
+          cargarDisponibilidad();
+        } else {
+          msgEl.className = 'form-msg err';
+          msgEl.textContent = 'No pudimos enviar la solicitud: ' + (data.error || 'error desconocido');
+        }
+      } catch (err) {
+        msgEl.className = 'form-msg err';
+        msgEl.textContent = 'Error de conexión. Llamanos al 4501-8730.';
+      } finally {
+        [...form.elements].forEach(el => el.disabled = false);
+        // Re-disable submit si el usuario no tiene un slot todavía
+        if (!horaInput.value) btnEnv.disabled = true;
+      }
+    });
+  }
+</script>
+</body>
+</html>
