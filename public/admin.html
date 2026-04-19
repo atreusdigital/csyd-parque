@@ -834,7 +834,7 @@ async function renderAlquilerGrid() {
         const st = r.pagado ? 'pagado' : 'pendiente';
         html += `<div class="slot ${st}" title="${esc(r.cliente || 'Reservado')}" onclick="clickSlot('${esc(cancha).replace(/'/g,"\\'")}','${fechas[i]}',${h},${r.id})">${st}</div>`;
       } else if (f) {
-        html += `<div class="slot" style="background:#f0cccc;color:#8e2a2d;cursor:default" title="Turno fijo — ${esc(f.cliente || '')}">fijo</div>`;
+        html += `<div class="slot" style="background:#f0cccc;color:#8e2a2d;cursor:default;font-size:11.5px;font-weight:700;letter-spacing:.2px;text-align:center;padding:6px 4px;line-height:1.2" title="Turno fijo — ${esc(f.cliente || '')}">${esc(f.cliente || 'Fijo')}</div>`;
       } else {
         html += `<div class="slot libre" title="Libre" onclick="clickSlot('${esc(cancha).replace(/'/g,"\\'")}','${fechas[i]}',${h},null)">libre</div>`;
       }
