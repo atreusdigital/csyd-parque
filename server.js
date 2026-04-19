@@ -10,6 +10,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
 const path = require('path');
 const { supabase } = require('./db');
 const asistenteRouter = require('./asistente');
@@ -26,6 +27,72 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'adm
 
 // Asistente IA
 app.use('/api', asistenteRouter);
+
+// ═══════════════════════════════════════════════════════════
+//  AUTH ADMIN (token firmado estilo JWT)
+// ═══════════════════════════════════════════════════════════
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'parque1949';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'dev-secret-change-me';
+const TOKEN_TTL_MS = 8 * 60 * 60 * 1000; // 8 h
+
+function b64url(buf) {
+  return Buffer.from(buf).toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+function b64urlDecode(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  return Buffer.from(s, 'base64').toString();
+}
+function signToken(payload) {
+  const h = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const p = b64url(JSON.stringify({ ...payload, iat: Date.now(), exp: Date.now() + TOKEN_TTL_MS }));
+  const sig = b64url(crypto.createHmac('sha256', ADMIN_SECRET).update(`${h}.${p}`).digest());
+  return `${h}.${p}.${sig}`;
+}
+function verifyToken(token) {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [h, p, s] = parts;
+  const expected = b64url(crypto.createHmac('sha256', ADMIN_SECRET).update(`${h}.${p}`).digest());
+  if (s !== expected) return null;
+  try {
+    const payload = JSON.parse(b64urlDecode(p));
+    if (!payload.exp || payload.exp < Date.now()) return null;
+    return payload;
+  } catch { return null; }
+}
+function requireAdmin(req, res, next) {
+  const hdr = req.headers.authorization || '';
+  const token = hdr.replace(/^Bearer\s+/i, '').trim();
+  const payload = verifyToken(token);
+  if (!payload) return res.status(401).json({ error: 'No autorizado' });
+  req.admin = payload;
+  next();
+}
+
+app.post('/api/admin/login', (req, res) => {
+  const { password } = req.body || {};
+  if (!password || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Contraseña incorrecta' });
+  }
+  res.json({ token: signToken({ role: 'admin' }), expiresAt: Date.now() + TOKEN_TTL_MS });
+});
+
+app.get('/api/admin/check', requireAdmin, (req, res) => {
+  res.json({ ok: true, exp: req.admin.exp });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  CONFIG CANCHAS / PRECIOS
+// ═══════════════════════════════════════════════════════════
+const CANCHAS_CFG = [
+  { id: 'Jose Batista',    numero: 1, nombre: 'José Batista',    tipo: 'Fútbol infantil',         precio: 90000  },
+  { id: 'Ramon Maddoni',   numero: 2, nombre: 'Ramón Maddoni',   tipo: 'Fútbol infantil',         precio: 90000  },
+  { id: 'Cesar La Paglia', numero: 3, nombre: 'César La Paglia', tipo: 'Futsal reglamentaria',    precio: 150000 },
+];
+const HORAS_ALQUILER = [21, 22]; // 21-22 y 22-23
+const DIAS_A_MOSTRAR = 7;
 
 // ═══════════════════════════════════════════════════════════
 //  VALIDAR ACCESO (endpoint para el molinete)
@@ -145,7 +212,7 @@ app.get('/api/socios/:id', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/socios', async (req, res) => {
+app.post('/api/socios', requireAdmin, async (req, res) => {
   const { nombre, dni, rfid, categoria, telefono, email, disciplinas, genero, fecha_nacimiento } = req.body;
   if (!nombre || !dni || !rfid) return res.status(400).json({ error: 'Campos requeridos: nombre, dni, rfid' });
 
@@ -176,7 +243,7 @@ app.post('/api/socios', async (req, res) => {
   res.status(201).json(data);
 });
 
-app.put('/api/socios/:id', async (req, res) => {
+app.put('/api/socios/:id', requireAdmin, async (req, res) => {
   const allowed = ['nombre','dni','rfid','categoria','estado_cuota','saldo','telefono','email','disciplinas','foto_url','activo','genero','fecha_nacimiento'];
   const updates = {};
   for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
@@ -194,7 +261,7 @@ app.put('/api/socios/:id', async (req, res) => {
   res.json(data);
 });
 
-app.delete('/api/socios/:id', async (req, res) => {
+app.delete('/api/socios/:id', requireAdmin, async (req, res) => {
   const { error } = await supabase
     .from('socios')
     .update({ activo: false })
@@ -206,7 +273,7 @@ app.delete('/api/socios/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 //  CUOTAS
 // ═══════════════════════════════════════════════════════════
-app.post('/api/cuotas/emitir', async (req, res) => {
+app.post('/api/cuotas/emitir', requireAdmin, async (req, res) => {
   const { periodo, monto_activo, monto_cadete, monto_familiar, fecha_venc } = req.body;
   if (!periodo) return res.status(400).json({ error: 'Falta "periodo"' });
 
@@ -236,7 +303,7 @@ app.post('/api/cuotas/emitir', async (req, res) => {
   res.json({ mensaje: `${data.length} cuotas emitidas para ${periodo}` });
 });
 
-app.post('/api/cuotas/:id/pagar', async (req, res) => {
+app.post('/api/cuotas/:id/pagar', requireAdmin, async (req, res) => {
   const { monto, metodo_pago } = req.body;
 
   const { data: cuota, error: e1 } = await supabase
@@ -307,7 +374,7 @@ app.get('/api/ingresos', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/ingresos', async (req, res) => {
+app.post('/api/ingresos', requireAdmin, async (req, res) => {
   const { fecha, concepto, monto, categoria } = req.body;
   if (!concepto || !monto || !categoria) return res.status(400).json({ error: 'Faltan campos' });
 
@@ -326,7 +393,7 @@ app.get('/api/gastos', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/gastos', async (req, res) => {
+app.post('/api/gastos', requireAdmin, async (req, res) => {
   const { fecha, concepto, monto, categoria } = req.body;
   if (!concepto || !monto || !categoria) return res.status(400).json({ error: 'Faltan campos' });
 
@@ -368,7 +435,215 @@ app.get('/api/finanzas/resumen', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
-//  ALQUILERES
+//  ALQUILERES — GRILLA PÚBLICA
+// ═══════════════════════════════════════════════════════════
+app.get('/api/alquileres/config', (req, res) => {
+  res.json({ canchas: CANCHAS_CFG, horas: HORAS_ALQUILER });
+});
+
+app.get('/api/alquileres/grilla', async (req, res) => {
+  const desde = req.query.desde || new Date().toISOString().slice(0, 10);
+  const dHasta = new Date(desde + 'T12:00:00');
+  dHasta.setDate(dHasta.getDate() + DIAS_A_MOSTRAR - 1);
+  const hasta = dHasta.toISOString().slice(0, 10);
+
+  const [qAlq, qFijos] = await Promise.all([
+    supabase.from('alquileres')
+      .select('cancha, fecha, hora, estado, expires_at')
+      .gte('fecha', desde).lte('fecha', hasta)
+      .in('estado', ['confirmada', 'pending']),
+    supabase.from('alquileres_fijos')
+      .select('cancha, dia_semana, hora, cliente, vigente_desde, vigente_hasta')
+      .eq('activo', true),
+  ]);
+  if (qAlq.error) return res.status(500).json({ error: qAlq.error.message });
+  if (qFijos.error) return res.status(500).json({ error: qFijos.error.message });
+
+  const now = Date.now();
+  const ocupados = new Set();
+  for (const a of qAlq.data || []) {
+    if (a.estado === 'pending' && (!a.expires_at || new Date(a.expires_at).getTime() < now)) continue;
+    ocupados.add(`${a.cancha}|${a.fecha}|${a.hora}`);
+  }
+
+  const fijosByKey = new Map(); // `cancha|dow|hora` → cliente
+  for (const f of qFijos.data || []) fijosByKey.set(`${f.cancha}|${f.dia_semana}|${f.hora}`, f.cliente);
+
+  const DIAS_CORTO = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  const dias = [];
+  for (let i = 0; i < DIAS_A_MOSTRAR; i++) {
+    const d = new Date(desde + 'T12:00:00');
+    d.setDate(d.getDate() + i);
+    const fecha = d.toISOString().slice(0, 10);
+    const dow = d.getDay();
+    const slots = [];
+    for (const c of CANCHAS_CFG) {
+      for (const h of HORAS_ALQUILER) {
+        const kOc = `${c.id}|${fecha}|${h}`;
+        const kFj = `${c.id}|${dow}|${h}`;
+        let estado = 'libre', cliente = null;
+        if (ocupados.has(kOc)) estado = 'ocupado';
+        else if (fijosByKey.has(kFj)) { estado = 'fijo'; cliente = fijosByKey.get(kFj); }
+        slots.push({ cancha: c.id, hora: h, estado, cliente });
+      }
+    }
+    dias.push({ fecha, dow, dia_corto: DIAS_CORTO[dow], dia_num: d.getDate(), slots });
+  }
+
+  res.json({ desde, hasta, canchas: CANCHAS_CFG, horas: HORAS_ALQUILER, dias });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  RESERVA PÚBLICA CON MERCADOPAGO
+// ═══════════════════════════════════════════════════════════
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
+const PUBLIC_URL = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+
+app.post('/api/alquileres/reservar', async (req, res) => {
+  const { cancha, fecha, hora, cliente, telefono, email } = req.body || {};
+  if (!cancha || !fecha || hora === undefined || !cliente || !telefono) {
+    return res.status(400).json({ error: 'Faltan datos (cancha, fecha, hora, cliente, telefono).' });
+  }
+  const cfg = CANCHAS_CFG.find(c => c.id === cancha);
+  if (!cfg) return res.status(400).json({ error: 'Cancha inválida' });
+  if (!HORAS_ALQUILER.includes(Number(hora))) return res.status(400).json({ error: 'Horario fuera de rango (21 o 22 hs)' });
+
+  // Limpiar pendings vencidos para este slot
+  await supabase.from('alquileres')
+    .delete()
+    .eq('cancha', cancha).eq('fecha', fecha).eq('hora', hora)
+    .eq('estado', 'pending')
+    .lt('expires_at', new Date().toISOString());
+
+  // Chequear colisión con confirmadas o pendings vivos
+  const { data: existentes } = await supabase.from('alquileres')
+    .select('id, estado, expires_at')
+    .eq('cancha', cancha).eq('fecha', fecha).eq('hora', hora)
+    .in('estado', ['confirmada', 'pending']);
+
+  const vivos = (existentes || []).filter(a =>
+    a.estado === 'confirmada' || (a.expires_at && new Date(a.expires_at).getTime() > Date.now())
+  );
+  if (vivos.length) return res.status(409).json({ error: 'Ese turno ya está reservado' });
+
+  // Chequear turno fijo recurrente
+  const dow = new Date(fecha + 'T12:00:00').getDay();
+  const { data: fijos } = await supabase.from('alquileres_fijos')
+    .select('id').eq('activo', true)
+    .eq('cancha', cancha).eq('dia_semana', dow).eq('hora', hora);
+  if (fijos && fijos.length) return res.status(409).json({ error: 'Ese horario tiene turno fijo' });
+
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  const { data: alq, error: insErr } = await supabase
+    .from('alquileres')
+    .insert({
+      cancha, fecha, hora: Number(hora),
+      cliente, telefono, email: email || '',
+      monto: cfg.precio, pagado: false, estado: 'pending', expires_at: expiresAt,
+    })
+    .select().single();
+
+  if (insErr) {
+    if (insErr.code === '23505') return res.status(409).json({ error: 'Turno ya reservado' });
+    return res.status(500).json({ error: insErr.message });
+  }
+
+  if (!MP_ACCESS_TOKEN) {
+    return res.status(500).json({ error: 'MP_ACCESS_TOKEN no configurado en el servidor' });
+  }
+
+  try {
+    const mpResp = await fetch('https://api.mercadopago.com/checkout/preferences', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: [{
+          id: String(alq.id),
+          title: `Alquiler ${cfg.nombre} — ${fecha} ${hora}:00h`,
+          quantity: 1,
+          unit_price: cfg.precio,
+          currency_id: 'ARS',
+        }],
+        payer: { name: cliente, email: email || undefined },
+        metadata: { alquiler_id: alq.id },
+        external_reference: String(alq.id),
+        notification_url: `${PUBLIC_URL}/api/mp/webhook`,
+        back_urls: {
+          success: `${PUBLIC_URL}/?pago=ok&alq=${alq.id}#alquiler`,
+          failure: `${PUBLIC_URL}/?pago=err&alq=${alq.id}#alquiler`,
+          pending: `${PUBLIC_URL}/?pago=pendiente&alq=${alq.id}#alquiler`,
+        },
+        auto_return: 'approved',
+        expires: true,
+        expiration_date_from: new Date().toISOString(),
+        expiration_date_to: expiresAt,
+      }),
+    });
+    const mp = await mpResp.json();
+    if (!mpResp.ok) {
+      console.error('[MP preference error]', mp);
+      await supabase.from('alquileres').delete().eq('id', alq.id);
+      return res.status(502).json({ error: 'MercadoPago rechazó la preferencia', detail: mp.message || mp });
+    }
+    await supabase.from('alquileres').update({ mp_preference_id: mp.id }).eq('id', alq.id);
+    res.json({
+      alquiler_id: alq.id,
+      init_point: mp.init_point,
+      sandbox_init_point: mp.sandbox_init_point,
+      expires_at: expiresAt,
+    });
+  } catch (err) {
+    console.error('[MP preference exception]', err);
+    await supabase.from('alquileres').delete().eq('id', alq.id);
+    res.status(502).json({ error: 'No se pudo conectar con MercadoPago' });
+  }
+});
+
+app.post('/api/mp/webhook', async (req, res) => {
+  res.status(200).send('ok'); // ack rápido
+  const type = req.body?.type || req.query?.type;
+  const paymentId = req.body?.data?.id || req.query?.['data.id'] || req.query?.id;
+  if (type !== 'payment' || !paymentId) return;
+
+  try {
+    const r = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+      headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}` },
+    });
+    const pago = await r.json();
+    if (!r.ok) return console.error('[MP webhook] fetch pago fallo', pago);
+
+    const alquilerId = pago.external_reference || pago.metadata?.alquiler_id;
+    if (!alquilerId) return console.error('[MP webhook] sin external_reference');
+
+    if (pago.status === 'approved') {
+      await supabase.from('alquileres').update({
+        estado: 'confirmada',
+        pagado: true,
+        mp_payment_id: String(pago.id),
+        expires_at: null,
+      }).eq('id', alquilerId);
+    } else if (pago.status === 'rejected' || pago.status === 'cancelled') {
+      await supabase.from('alquileres').update({
+        estado: 'cancelada',
+        mp_payment_id: String(pago.id),
+      }).eq('id', alquilerId);
+    }
+  } catch (e) {
+    console.error('[MP webhook] excepcion', e);
+  }
+});
+
+app.get('/api/alquileres/:id/status', async (req, res) => {
+  const { data, error } = await supabase.from('alquileres')
+    .select('id, cancha, fecha, hora, estado, pagado, expires_at, monto, cliente')
+    .eq('id', req.params.id).maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'No encontrada' });
+  res.json(data);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  ALQUILERES — ADMIN (listados, alta manual, bloqueo)
 // ═══════════════════════════════════════════════════════════
 app.get('/api/alquileres', async (req, res) => {
   const { fecha, cancha } = req.query;
@@ -380,9 +655,9 @@ app.get('/api/alquileres', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/alquileres', async (req, res) => {
+app.post('/api/alquileres', requireAdmin, async (req, res) => {
   const { cancha, fecha, hora, cliente, telefono, monto, pagado } = req.body;
-  if (!cancha || !fecha || !hora) return res.status(400).json({ error: 'Faltan cancha, fecha u hora' });
+  if (!cancha || !fecha || hora === undefined) return res.status(400).json({ error: 'Faltan cancha, fecha u hora' });
 
   const { data, error } = await supabase
     .from('alquileres')
@@ -392,9 +667,9 @@ app.post('/api/alquileres', async (req, res) => {
       telefono: telefono || '',
       monto: monto || 0,
       pagado: !!pagado,
+      estado: 'confirmada',
     })
-    .select()
-    .single();
+    .select().single();
 
   if (error) {
     if (error.code === '23505') return res.status(409).json({ error: 'Turno ya reservado' });
@@ -403,27 +678,52 @@ app.post('/api/alquileres', async (req, res) => {
   res.status(201).json(data);
 });
 
-app.put('/api/alquileres/:id', async (req, res) => {
+app.put('/api/alquileres/:id', requireAdmin, async (req, res) => {
   const allowed = ['cancha','fecha','hora','cliente','telefono','monto','pagado','estado'];
   const updates = {};
   for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Sin campos válidos' });
 
   const { data, error } = await supabase
-    .from('alquileres')
-    .update(updates)
-    .eq('id', req.params.id)
-    .select()
-    .maybeSingle();
+    .from('alquileres').update(updates).eq('id', req.params.id).select().maybeSingle();
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: 'Reserva no encontrada' });
   res.json(data);
 });
 
-app.delete('/api/alquileres/:id', async (req, res) => {
+app.delete('/api/alquileres/:id', requireAdmin, async (req, res) => {
   const { error } = await supabase.from('alquileres').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Reserva cancelada' });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  TURNOS FIJOS RECURRENTES (admin)
+// ═══════════════════════════════════════════════════════════
+app.get('/api/alquileres/fijos', async (req, res) => {
+  const { data, error } = await supabase.from('alquileres_fijos')
+    .select('*').eq('activo', true).order('dia_semana').order('hora');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/alquileres/fijos', requireAdmin, async (req, res) => {
+  const { cancha, dia_semana, hora, cliente, telefono } = req.body || {};
+  if (!cancha || dia_semana === undefined || hora === undefined) {
+    return res.status(400).json({ error: 'Faltan cancha, dia_semana u hora' });
+  }
+  const { data, error } = await supabase.from('alquileres_fijos')
+    .insert({ cancha, dia_semana: Number(dia_semana), hora: Number(hora), cliente: cliente || '', telefono: telefono || '' })
+    .select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+app.delete('/api/alquileres/fijos/:id', requireAdmin, async (req, res) => {
+  const { error } = await supabase.from('alquileres_fijos')
+    .update({ activo: false }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Turno fijo eliminado' });
 });
 
 // ═══════════════════════════════════════════════════════════

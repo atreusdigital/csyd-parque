@@ -184,8 +184,9 @@
     <div class="sub">Sistema Integral de Gestión · <span id="clock"></span></div>
   </div>
   <div style="margin-left:auto" class="row">
-    <span class="pill">👤 Nico (Administrador)</span>
+    <span class="pill">👤 Administrador</span>
     <span class="pill" style="border-color:var(--rojo);color:var(--rojo-osc)">● En vivo</span>
+    <button onclick="logoutAdmin()" style="padding:6px 12px;background:transparent;border:1px solid var(--verde-claro);border-radius:4px;color:#8aa59a;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:.5px">Salir</button>
   </div>
 </header>
 
@@ -196,6 +197,7 @@
     <button data-page="cuotas"><span class="dot"></span> Cuotas y Cobranzas</button>
     <button data-page="finanzas"><span class="dot"></span> Finanzas</button>
     <button data-page="alquileres"><span class="dot"></span> Alquileres de Cancha</button>
+    <button data-page="fijos"><span class="dot"></span> Turnos Fijos Recurrentes</button>
     <button data-page="accesos"><span class="dot"></span> Molinetes / Accesos</button>
     <button data-page="ia"><span class="dot"></span> Inteligencia Artificial</button>
     <button data-page="config"><span class="dot"></span> Configuración</button>
@@ -218,14 +220,32 @@ const carnet = id => 'CP-' + String(id).padStart(4, '0');
 /* Estado (cache por pantalla + historial del chat) */
 const state = { historial: [] };
 
-/* Helper fetch */
+/* Helper fetch con Bearer token */
+function getAdminToken() { return localStorage.getItem('parque_admin_token') || ''; }
+function setAdminToken(t, exp) {
+  if (t) { localStorage.setItem('parque_admin_token', t); localStorage.setItem('parque_admin_exp', exp || 0); }
+  else { localStorage.removeItem('parque_admin_token'); localStorage.removeItem('parque_admin_exp'); }
+}
+function isAdminLogged() {
+  const t = getAdminToken();
+  const exp = Number(localStorage.getItem('parque_admin_exp') || 0);
+  return !!t && exp > Date.now();
+}
 async function api(path, opts = {}) {
   try {
+    const headers = { 'Content-Type': 'application/json' };
+    const tok = getAdminToken();
+    if (tok) headers['Authorization'] = 'Bearer ' + tok;
     const r = await fetch(API + path, {
       method: opts.method || 'GET',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
+    if (r.status === 401) {
+      setAdminToken(null);
+      mostrarLogin('Tu sesión expiró. Volvé a ingresar.');
+      return null;
+    }
     const data = await r.json();
     if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
     return data;
@@ -234,6 +254,61 @@ async function api(path, opts = {}) {
     return null;
   }
 }
+
+/* ═══ Login gate ═══ */
+function mostrarLogin(msg = '') {
+  const existing = document.getElementById('loginOverlay');
+  if (existing) existing.remove();
+  const ov = document.createElement('div');
+  ov.id = 'loginOverlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:#0f1916;z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;font-family:Manrope,sans-serif';
+  ov.innerHTML = `
+    <div style="background:#1a2821;border:1px solid #2a3a30;border-radius:12px;padding:32px 28px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="text-align:center;margin-bottom:22px">
+        <img src="/logo.png" alt="" style="height:56px;margin-bottom:10px">
+        <div style="color:#fff;font-size:20px;font-weight:700">CSyD Parque</div>
+        <div style="color:#8aa59a;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Panel Administración</div>
+      </div>
+      <form id="loginForm" autocomplete="off">
+        <label style="color:#8aa59a;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700">Contraseña</label>
+        <input type="password" id="loginPass" autofocus required style="width:100%;margin:6px 0 14px;padding:12px 14px;background:#0f1916;border:1px solid #2a3a30;border-radius:6px;color:#fff;font-size:15px;font-family:inherit">
+        <div id="loginMsg" style="color:#e0282e;font-size:12.5px;min-height:18px;margin-bottom:10px;font-weight:600">${msg}</div>
+        <button type="submit" style="width:100%;padding:13px;background:#005020;color:#fff;border:0;border-radius:6px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:inherit;font-size:14px">Ingresar</button>
+      </form>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pass = document.getElementById('loginPass').value;
+    const msgEl = document.getElementById('loginMsg');
+    msgEl.textContent = 'Verificando…';
+    msgEl.style.color = '#8aa59a';
+    try {
+      const r = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pass }),
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        msgEl.textContent = data.error || 'Error';
+        msgEl.style.color = '#e0282e';
+        return;
+      }
+      setAdminToken(data.token, data.expiresAt);
+      ov.remove();
+      if (typeof window.adminInit === 'function') window.adminInit();
+    } catch (err) {
+      msgEl.textContent = 'Error de conexión';
+      msgEl.style.color = '#e0282e';
+    }
+  });
+}
+function logoutAdmin() {
+  setAdminToken(null);
+  mostrarLogin('Sesión cerrada');
+}
+window.logoutAdmin = logoutAdmin;
 
 /* Semana / fechas */
 function inicioSemana(d = new Date()) {
@@ -605,6 +680,82 @@ pages.finanzas = async () => {
       <button class="btn ghost" onclick="nuevoIngreso()">＋ Registrar ingreso</button>
     </div>
   </div>`;
+};
+
+pages.fijos = async () => {
+  return `
+  <h2 class="page">Turnos Fijos Recurrentes</h2>
+  <p class="mini" style="margin:0 0 14px">Estos horarios se repiten todas las semanas automáticamente. Aparecen bloqueados en la grilla pública para que nadie los reserve.</p>
+  <div class="card" style="padding:18px;margin-bottom:14px">
+    <h3 style="margin:0 0 12px;font-size:14px">Agregar nuevo</h3>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <select id="fx-cancha" style="min-width:180px">
+        <option value="Jose Batista">Cancha 1 — José Batista</option>
+        <option value="Ramon Maddoni">Cancha 2 — Ramón Maddoni</option>
+        <option value="Cesar La Paglia" selected>Cancha 3 — César La Paglia</option>
+      </select>
+      <select id="fx-dia">
+        <option value="1">Lunes</option><option value="2">Martes</option>
+        <option value="3">Miércoles</option><option value="4">Jueves</option>
+        <option value="5">Viernes</option><option value="6">Sábado</option>
+        <option value="0">Domingo</option>
+      </select>
+      <select id="fx-hora">
+        <option value="21">21 a 22 hs</option>
+        <option value="22">22 a 23 hs</option>
+      </select>
+      <input type="text" id="fx-cliente" placeholder="Nombre del grupo / equipo" style="flex:1;min-width:180px">
+      <input type="tel" id="fx-tel" placeholder="Teléfono (opcional)" style="min-width:140px">
+      <button class="btn" onclick="crearFijo()" style="background:var(--verde);color:#fff;border:0;padding:10px 16px;border-radius:4px;cursor:pointer;font-weight:700">Agregar</button>
+    </div>
+  </div>
+  <div class="card"><div id="fijosList" style="min-height:120px"><div class="sk" style="height:120px;width:100%"></div></div></div>`;
+};
+
+async function cargarFijos() {
+  const data = await api('/alquileres/fijos') || [];
+  const el = document.getElementById('fijosList');
+  if (!el) return;
+  if (!data.length) { el.innerHTML = '<p class="mini" style="padding:18px;text-align:center">Todavía no cargaste turnos fijos.</p>'; return; }
+  const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const CANCHAS = { 'Jose Batista': 'Cancha 1 — José Batista', 'Ramon Maddoni': 'Cancha 2 — Ramón Maddoni', 'Cesar La Paglia': 'Cancha 3 — César La Paglia' };
+  el.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr style="text-align:left;border-bottom:1px solid var(--verde-claro)">
+      <th style="padding:10px">Cancha</th><th>Día</th><th>Hora</th><th>Cliente</th><th>Teléfono</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${data.map(f => `<tr style="border-bottom:1px solid var(--linea)">
+      <td style="padding:10px"><b>${esc(CANCHAS[f.cancha] || f.cancha)}</b></td>
+      <td>${DIAS[f.dia_semana]}</td>
+      <td>${f.hora}:00 – ${f.hora+1}:00</td>
+      <td>${esc(f.cliente || '—')}</td>
+      <td>${esc(f.telefono || '—')}</td>
+      <td><button onclick="eliminarFijo(${f.id})" style="background:none;border:1px solid var(--rojo);color:var(--rojo);padding:4px 10px;border-radius:3px;cursor:pointer;font-size:11px">Eliminar</button></td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+window.crearFijo = async () => {
+  const cancha = document.getElementById('fx-cancha').value;
+  const dia_semana = Number(document.getElementById('fx-dia').value);
+  const hora = Number(document.getElementById('fx-hora').value);
+  const cliente = document.getElementById('fx-cliente').value.trim();
+  const telefono = document.getElementById('fx-tel').value.trim();
+  if (!cliente) { toast('Falta el nombre del cliente', 'err'); return; }
+  const r = await api('/alquileres/fijos', { method: 'POST', body: { cancha, dia_semana, hora, cliente, telefono } });
+  if (!r) return;
+  toast('Turno fijo agregado');
+  document.getElementById('fx-cliente').value = '';
+  document.getElementById('fx-tel').value = '';
+  cargarFijos();
+};
+
+window.eliminarFijo = async (id) => {
+  if (!confirm('¿Eliminar este turno fijo? Deja de aparecer bloqueado en la grilla pública.')) return;
+  const r = await api('/alquileres/fijos/' + id, { method: 'DELETE' });
+  if (!r) return;
+  toast('Turno fijo eliminado');
+  cargarFijos();
 };
 
 pages.alquileres = async () => {
@@ -1130,6 +1281,9 @@ function afterRender(p) {
   if (p === 'alquileres') {
     renderAlquilerGrid();
   }
+  if (p === 'fijos') {
+    cargarFijos();
+  }
 }
 function debounce(fn, ms) {
   let t; return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); };
@@ -1138,8 +1292,13 @@ function debounce(fn, ms) {
 /* Reloj */
 setInterval(() => { const el = document.getElementById('clock'); if (el) el.textContent = new Date().toLocaleString('es-AR'); }, 1000);
 
-/* Init */
-render('dashboard');
+/* Init — con login gate */
+window.adminInit = function () { render('dashboard'); };
+if (isAdminLogged()) {
+  window.adminInit();
+} else {
+  mostrarLogin();
+}
 </script>
 </body>
 </html>

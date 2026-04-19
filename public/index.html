@@ -506,72 +506,204 @@
     color:var(--verde-osc);font-weight:600;
   }
 
-  /* Alquiler form */
-  .alquiler-form{
-    display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;
-    max-width:720px;margin:10px auto 40px;text-align:left;
+  /* ═══ Alquiler — Grilla interactiva ═══ */
+  .alquiler .wrap{max-width:1080px}
+  .alquiler-intro{max-width:720px;margin:0 auto 36px}
+
+  /* Header de canchas con precios */
+  .canchas-resumen{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+    margin-bottom:32px;
+  }
+  .cancha-card{
     background:#fff;border:1px solid var(--verde-claro);border-radius:8px;
-    padding:28px 28px 26px;
-    box-shadow:0 6px 24px rgba(0,80,32,.07);
+    padding:18px 20px;text-align:left;display:flex;align-items:center;gap:14px;
+    box-shadow:0 2px 8px rgba(0,80,32,.05);
+    transition:transform .15s,box-shadow .15s;
   }
-  .alquiler-form .field{display:flex;flex-direction:column;gap:6px}
-  .alquiler-form .field.full{grid-column:1/-1;margin-top:6px}
-  .alquiler-form label{
-    font-family:'Manrope',sans-serif;
-    font-size:11px;font-weight:700;letter-spacing:1.2px;
-    text-transform:uppercase;color:var(--verde-osc);
+  .cancha-card .cc-num{
+    width:44px;height:44px;border-radius:50%;background:var(--verde);color:#fff;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    font-family:'Bebas Neue','Manrope',sans-serif;font-size:24px;font-weight:700;
   }
-  .alquiler-form input,.alquiler-form select{
-    font-family:'Manrope',sans-serif;
-    font-size:15px;padding:12px 14px;
-    border:1px solid var(--verde-claro);border-radius:4px;
+  .cancha-card.premium .cc-num{background:var(--rojo)}
+  .cancha-card .cc-meta{flex:1;min-width:0}
+  .cancha-card .cc-name{
+    font-family:'Manrope',sans-serif;font-weight:700;color:var(--verde-osc);
+    font-size:14px;line-height:1.2;
+  }
+  .cancha-card .cc-tipo{
+    font-family:'Manrope',sans-serif;font-size:11px;color:var(--mute);
+    margin-top:2px;letter-spacing:.3px;
+  }
+  .cancha-card .cc-precio{
+    font-family:'Manrope',sans-serif;font-weight:800;color:var(--verde-osc);
+    font-size:16px;white-space:nowrap;
+  }
+  .cancha-card .cc-precio small{
+    display:block;font-size:10px;color:var(--mute);font-weight:500;
+    letter-spacing:.5px;text-transform:uppercase;text-align:right;
+  }
+  @media(max-width:780px){
+    .canchas-resumen{grid-template-columns:1fr}
+  }
+
+  /* Day picker */
+  .day-picker{
+    display:flex;gap:8px;overflow-x:auto;margin:0 -10px 22px;padding:4px 10px 14px;
+    scrollbar-width:none;
+  }
+  .day-picker::-webkit-scrollbar{display:none}
+  .day-btn{
+    flex:0 0 auto;min-width:76px;padding:12px 14px;border-radius:8px;
+    background:#fff;border:2px solid var(--verde-claro);cursor:pointer;
+    font-family:'Manrope',sans-serif;text-align:center;
+    transition:border-color .15s,background .15s,transform .08s;
+  }
+  .day-btn:hover{border-color:var(--verde);background:var(--verde-claro)}
+  .day-btn.active{background:var(--verde);border-color:var(--verde);color:#fff}
+  .day-btn .dow{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;opacity:.75}
+  .day-btn .dnum{font-size:22px;font-weight:800;line-height:1;margin-top:4px}
+  .day-btn.active .dow{opacity:1}
+
+  /* Grilla del día — 3 canchas × 2 slots */
+  .grilla-dia{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+    margin-bottom:18px;
+  }
+  .col-cancha{
+    background:#fff;border-radius:8px;border:1px solid var(--verde-claro);
+    padding:18px 16px;
+  }
+  .col-cancha .col-head{
+    font-family:'Manrope',sans-serif;font-weight:700;font-size:13px;
+    color:var(--verde-osc);margin-bottom:12px;letter-spacing:.3px;
+  }
+  .col-cancha .col-head small{display:block;font-weight:500;font-size:10.5px;
+    color:var(--mute);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  .slot{
+    display:flex;align-items:center;justify-content:space-between;
+    width:100%;padding:14px 14px;margin-bottom:8px;border-radius:6px;
+    font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;
+    border:2px solid transparent;cursor:pointer;
+    transition:transform .08s,box-shadow .15s,border-color .15s;
+    text-align:left;background:none;
+  }
+  .slot:last-child{margin-bottom:0}
+  .slot .slot-hora{font-weight:800;font-size:15px}
+  .slot .slot-estado{
+    font-size:10.5px;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;
+  }
+  .slot.libre{background:#edf7ed;color:var(--verde-osc);border-color:#bde0bd}
+  .slot.libre:hover{background:var(--verde);color:#fff;border-color:var(--verde);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,80,32,.2)}
+  .slot.ocupado{background:#f3f3f3;color:#888;cursor:not-allowed;border-color:#e5e5e5}
+  .slot.fijo{background:#fff3f3;color:#8e2a2d;cursor:not-allowed;border-color:#f0cccc}
+  .slot.fijo .slot-cliente{font-size:10.5px;color:#b44;font-weight:600;margin-top:2px;display:block;letter-spacing:.2px}
+  @media(max-width:780px){
+    .grilla-dia{grid-template-columns:1fr;gap:10px}
+    .col-cancha{padding:14px 14px}
+  }
+
+  .grilla-legend{
+    display:flex;gap:20px;justify-content:center;flex-wrap:wrap;
+    font-family:'Manrope',sans-serif;font-size:12px;color:var(--mute);
+    margin-bottom:30px;letter-spacing:.2px;
+  }
+  .grilla-legend .lg-dot{
+    display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;
+    vertical-align:middle;
+  }
+  .lg-dot.libre{background:#bde0bd;border:2px solid #bde0bd}
+  .lg-dot.ocupado{background:#e5e5e5;border:2px solid #e5e5e5}
+  .lg-dot.fijo{background:#f0cccc;border:2px solid #f0cccc}
+
+  /* Modal de reserva */
+  .reserva-modal[hidden]{display:none}
+  .reserva-modal{
+    position:fixed;inset:0;z-index:1000;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .reserva-modal .rm-back{
+    position:absolute;inset:0;background:rgba(0,20,8,.7);backdrop-filter:blur(4px);
+    animation:fadeIn .2s ease;
+  }
+  .reserva-modal .rm-card{
+    position:relative;background:#fff;border-radius:12px;
+    max-width:460px;width:100%;padding:34px 28px 28px;text-align:left;
+    box-shadow:0 30px 80px rgba(0,0,0,.4);
+    animation:popIn .22s cubic-bezier(.3,1.5,.5,1);
+  }
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes popIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+  .rm-close{
+    position:absolute;top:14px;right:14px;background:none;border:0;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    font-size:22px;line-height:1;color:var(--mute);
+    display:flex;align-items:center;justify-content:center;
+    transition:background .15s,color .15s;
+  }
+  .rm-close:hover{background:#f3f3f3;color:var(--tinta)}
+  .rm-eyebrow{
+    font-family:'Manrope',sans-serif;font-size:10.5px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--rojo);font-weight:700;margin-bottom:6px;
+  }
+  .rm-title{
+    font-family:'Bebas Neue','Manrope',sans-serif;font-size:28px;line-height:1.1;
+    color:var(--verde-osc);margin:0 0 2px;font-weight:400;letter-spacing:1px;
+  }
+  .rm-subtitle{
+    font-family:'Manrope',sans-serif;font-size:14px;color:var(--mute);
+    margin-bottom:14px;
+  }
+  .rm-precio{
+    font-family:'Manrope',sans-serif;font-weight:800;
+    font-size:30px;color:var(--verde-osc);margin-bottom:18px;letter-spacing:-.5px;
+  }
+  .rm-precio small{font-size:13px;font-weight:500;color:var(--mute);letter-spacing:.3px}
+  .rm-form .rf-field{margin-bottom:12px}
+  .rm-form label{
+    display:block;font-family:'Manrope',sans-serif;font-size:11px;font-weight:700;
+    letter-spacing:1.2px;text-transform:uppercase;color:var(--verde-osc);margin-bottom:5px;
+  }
+  .rm-form input{
+    width:100%;font-family:'Manrope',sans-serif;font-size:14.5px;
+    padding:11px 13px;border:1px solid var(--verde-claro);border-radius:5px;
     background:#fff;color:var(--tinta);
     transition:border-color .15s,box-shadow .15s;
   }
-  .alquiler-form input:focus,.alquiler-form select:focus{
-    outline:none;border-color:var(--verde);
-    box-shadow:0 0 0 3px rgba(0,80,32,.15);
+  .rm-form input:focus{outline:none;border-color:var(--verde);box-shadow:0 0 0 3px rgba(0,80,32,.15)}
+  .rm-form input:disabled{background:#f5f5f5}
+  .btn-mp{
+    width:100%;padding:15px;margin-top:6px;
+    background:#009ee3;color:#fff;border:0;border-radius:6px;cursor:pointer;
+    font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:background .15s,transform .08s;
   }
-  .alquiler-form input:disabled,.alquiler-form select:disabled{background:#f0f0f0;cursor:wait}
-  .alquiler-form .btn{width:100%;font-size:14px;padding:16px}
-  .form-msg{
-    font-family:'Manrope',sans-serif;font-size:13px;margin-top:10px;
-    min-height:20px;font-weight:600;
+  .btn-mp:hover{background:#0089c7}
+  .btn-mp:active{transform:translateY(1px)}
+  .btn-mp:disabled{background:#7fcbe8;cursor:wait}
+  .rm-sep{
+    display:flex;align-items:center;gap:10px;margin:16px 0;
+    font-family:'Manrope',sans-serif;font-size:11px;color:var(--mute);
+    text-transform:uppercase;letter-spacing:1.5px;
   }
-  .form-msg.ok{color:var(--verde)}
-  .form-msg.err{color:var(--rojo-osc)}
-  @media(max-width:560px){ .alquiler-form{grid-template-columns:1fr;padding:22px 18px} }
-
-  /* Grilla de disponibilidad */
-  .slots-grid{
-    display:grid;grid-template-columns:repeat(5,1fr);gap:8px;
-    margin-top:8px;min-height:70px;
+  .rm-sep::before,.rm-sep::after{content:'';flex:1;height:1px;background:var(--verde-claro)}
+  .btn-wsp{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:13px;text-decoration:none;
+    background:#fff;border:2px solid var(--verde);color:var(--verde-osc);
+    border-radius:6px;
+    font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;letter-spacing:.5px;
+    transition:background .15s;
   }
-  .slot-btn{
-    background:#fff;border:2px solid var(--verde-claro);
-    padding:12px 8px;border-radius:6px;cursor:pointer;
-    font-family:'Manrope',sans-serif;font-weight:700;font-size:14px;
-    color:var(--verde-osc);
-    display:flex;flex-direction:column;align-items:center;gap:3px;
-    transition:border-color .15s,background .15s,color .15s,transform .08s;
+  .btn-wsp:hover{background:var(--verde-claro)}
+  .rm-msg{
+    font-family:'Manrope',sans-serif;font-size:13px;margin-top:12px;min-height:18px;font-weight:600;
   }
-  .slot-btn small{font-weight:500;font-size:9.5px;color:var(--mute);letter-spacing:.8px;text-transform:uppercase}
-  .slot-btn:hover:not(.taken){border-color:var(--verde);background:var(--verde-claro)}
-  .slot-btn:active:not(.taken){transform:translateY(1px)}
-  .slot-btn.selected{border-color:var(--verde);background:var(--verde);color:#fff}
-  .slot-btn.selected small{color:#c6dfcf}
-  .slot-btn.taken{
-    background:#f5f5f5;color:#aaa;border-color:#e5e5e5;
-    cursor:not-allowed;text-decoration:line-through;
-  }
-  .slot-btn.taken small{color:#bbb;text-decoration:none}
-  .slots-hint{
-    grid-column:1/-1;font-size:13px;color:var(--mute);
-    text-align:center;padding:22px 10px;margin:0;
-    font-family:'Manrope',sans-serif;
-  }
-  .slots-hint.err{color:var(--rojo-osc);font-style:normal;font-weight:600}
-  @media(max-width:560px){ .slots-grid{grid-template-columns:repeat(3,1fr)} }
+  .rm-msg.err{color:var(--rojo-osc)}
+  .rm-msg.ok{color:var(--verde)}
 
   /* Figuras y galerías */
   figure{margin:0}
@@ -1501,53 +1633,66 @@
   <div class="wrap">
     <div class="section-eyebrow">Alquiler de canchas</div>
     <h2>Jugá donde jugaron<br>los <span class="accent">grandes.</span></h2>
+    <p class="lead alquiler-intro">De 21 a 23 hs. Elegí día, cancha y pagá al instante por MercadoPago. Tu turno queda confirmado al toque.</p>
 
-    <form id="formAlquiler" class="alquiler-form" novalidate>
-      <div class="field">
-        <label for="f-nombre">Nombre completo</label>
-        <input type="text" id="f-nombre" name="cliente" required autocomplete="name" placeholder="Tu nombre">
-      </div>
-      <div class="field">
-        <label for="f-tel">Teléfono / WhatsApp</label>
-        <input type="tel" id="f-tel" name="telefono" required autocomplete="tel" placeholder="11 XXXX-XXXX">
-      </div>
-      <div class="field">
-        <label for="f-email">Email</label>
-        <input type="email" id="f-email" name="email" autocomplete="email" placeholder="opcional">
-      </div>
-      <div class="field">
-        <label for="f-cancha">Cancha</label>
-        <select id="f-cancha" name="cancha" required>
-          <option value="">Elegí cancha…</option>
-          <option value="Jose Batista">Cancha 1 — Jose Batista</option>
-          <option value="Ramon Maddoni">Cancha 2 — Ramón Maddoni</option>
-          <option value="Cesar La Paglia">Cancha 3 — César La Paglia</option>
-        </select>
-      </div>
-      <div class="field full">
-        <label for="f-fecha">Fecha</label>
-        <input type="date" id="f-fecha" name="fecha" required>
-      </div>
-      <div class="field full">
-        <label>Disponibilidad</label>
-        <div id="slotsGrid" class="slots-grid" aria-live="polite">
-          <p class="slots-hint">Elegí cancha y fecha para ver los turnos libres.</p>
-        </div>
-        <input type="hidden" id="f-hora" name="hora">
-      </div>
-      <div class="field full">
-        <button type="submit" class="btn btn-primary" id="btnEnviar" disabled>Enviar solicitud</button>
-        <p id="formMsg" class="form-msg" role="status" aria-live="polite"></p>
-      </div>
-    </form>
+    <div class="canchas-resumen" id="canchasResumen">
+      <div class="cancha-card"><div class="cc-num">1</div><div class="cc-meta"><div class="cc-name">José Batista</div><div class="cc-tipo">Fútbol infantil</div></div><div class="cc-precio">$90.000<small>/hora</small></div></div>
+      <div class="cancha-card"><div class="cc-num">2</div><div class="cc-meta"><div class="cc-name">Ramón Maddoni</div><div class="cc-tipo">Fútbol infantil</div></div><div class="cc-precio">$90.000<small>/hora</small></div></div>
+      <div class="cancha-card premium"><div class="cc-num">3</div><div class="cc-meta"><div class="cc-name">César La Paglia</div><div class="cc-tipo">Futsal reglamentaria</div></div><div class="cc-precio">$150.000<small>/hora</small></div></div>
+    </div>
+
+    <div class="day-picker" id="dayPicker" role="tablist" aria-label="Elegí el día"></div>
+    <div class="grilla-dia" id="grillaDia" aria-live="polite"></div>
+
+    <div class="grilla-legend">
+      <span><span class="lg-dot libre"></span>Libre — pagá y reservá</span>
+      <span><span class="lg-dot ocupado"></span>Ocupado</span>
+      <span><span class="lg-dot fijo"></span>Turno fijo del club</span>
+    </div>
 
     <div class="facts">
-      <div class="fact"><div class="label">Canchas disponibles</div><div class="value">3 canchas</div></div>
-      <div class="fact"><div class="label">Turnos por día</div><div class="value">18 a 23 hs</div></div>
+      <div class="fact"><div class="label">Horario de alquiler</div><div class="value">21 a 23 hs</div></div>
+      <div class="fact"><div class="label">Pago</div><div class="value">MercadoPago</div></div>
       <div class="fact"><div class="label">Contacto rápido</div><div class="value"><a href="tel:+541145018730" style="color:inherit;text-decoration:none">11 4501-8730</a></div></div>
     </div>
   </div>
 </section>
+
+<!-- Modal reserva -->
+<div class="reserva-modal" id="reservaModal" hidden role="dialog" aria-modal="true" aria-labelledby="rmTitle">
+  <div class="rm-back" data-close></div>
+  <div class="rm-card">
+    <button class="rm-close" type="button" aria-label="Cerrar" data-close>×</button>
+    <div class="rm-eyebrow" id="rmCancha">Cancha 1 — José Batista</div>
+    <h3 class="rm-title" id="rmTitle">Sábado 19 · 21 a 22 hs</h3>
+    <p class="rm-subtitle">Turno de 1 hora en cancha reglamentaria.</p>
+    <div class="rm-precio" id="rmPrecio">$90.000<small> · 1 hora</small></div>
+    <form class="rm-form" id="reservaForm">
+      <div class="rf-field">
+        <label for="rm-nombre">Nombre completo</label>
+        <input type="text" id="rm-nombre" name="cliente" required autocomplete="name" placeholder="Tu nombre">
+      </div>
+      <div class="rf-field">
+        <label for="rm-tel">WhatsApp</label>
+        <input type="tel" id="rm-tel" name="telefono" required autocomplete="tel" placeholder="11 5555-1234">
+      </div>
+      <div class="rf-field">
+        <label for="rm-email">Email (opcional)</label>
+        <input type="email" id="rm-email" name="email" autocomplete="email" placeholder="para el recibo de MP">
+      </div>
+      <button type="submit" class="btn-mp" id="btnPagar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+        Pagar y reservar
+      </button>
+      <p class="rm-msg" id="rmMsg" role="status" aria-live="polite"></p>
+    </form>
+    <div class="rm-sep">o</div>
+    <a class="btn-wsp" id="btnWspReserva" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2zm5.6 14.3c-.2.6-1.3 1.2-1.8 1.2-.5 0-.5.4-3-1-2.5-1.3-4-4-4.1-4.2-.1-.2-1-1.3-1-2.5s.6-1.7.9-2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .5.4s.7 1.8.8 2 .1.3 0 .5l-.3.3c-.1.2-.3.3-.4.5-.2.2-.3.4-.2.7s.7 1.2 1.5 1.9c1 .9 1.8 1.1 2.1 1.3.2.1.4.1.6-.1l.7-.8c.2-.2.3-.2.6-.1l1.8.9c.3.2.5.2.5.4 0 .2 0 .7-.2 1.2z"/></svg>
+      Consultar por WhatsApp
+    </a>
+  </div>
+</div>
 
 <!-- ═══════════════════ CONTACTO ═══════════════════ -->
 <footer class="contacto" id="contacto">
@@ -1845,123 +1990,199 @@
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-  // ═══ Alquiler: form + disponibilidad en vivo ═══
-  const form = document.getElementById('formAlquiler');
-  const btnEnv = document.getElementById('btnEnviar');
-  const msgEl = document.getElementById('formMsg');
-  const canchaSel = document.getElementById('f-cancha');
-  const fechaInput = document.getElementById('f-fecha');
-  const slotsGrid = document.getElementById('slotsGrid');
-  const horaInput = document.getElementById('f-hora');
+  // ═══ Alquiler: grilla interactiva + modal + MercadoPago ═══
+  const dayPicker = document.getElementById('dayPicker');
+  const grillaDia = document.getElementById('grillaDia');
+  const modal = document.getElementById('reservaModal');
+  const rmCancha = document.getElementById('rmCancha');
+  const rmTitle = document.getElementById('rmTitle');
+  const rmPrecio = document.getElementById('rmPrecio');
+  const rmMsg = document.getElementById('rmMsg');
+  const reservaForm = document.getElementById('reservaForm');
+  const btnPagar = document.getElementById('btnPagar');
+  const btnWspReserva = document.getElementById('btnWspReserva');
 
-  const HORARIOS = ['18:00','19:00','20:00','21:00','22:00'];
+  const MESES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DIAS_LARGO = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const fmtPrecio = n => '$' + Number(n).toLocaleString('es-AR');
 
-  // Fecha mínima = hoy (permite reservar el mismo día)
-  if (fechaInput) {
-    fechaInput.min = new Date().toISOString().split('T')[0];
-  }
+  let gridData = null;
+  let activeDayIdx = 0;
+  let slotSeleccionado = null;
 
-  async function cargarDisponibilidad() {
-    const cancha = canchaSel.value;
-    const fecha = fechaInput.value;
-    horaInput.value = '';
-    btnEnv.disabled = true;
-
-    if (!cancha || !fecha) {
-      slotsGrid.innerHTML = '<p class="slots-hint">Elegí cancha y fecha para ver los turnos libres.</p>';
-      return;
-    }
-
-    slotsGrid.innerHTML = '<p class="slots-hint">Consultando disponibilidad…</p>';
+  async function cargarGrilla() {
     try {
-      const r = await fetch(`/api/alquileres?cancha=${encodeURIComponent(cancha)}&fecha=${encodeURIComponent(fecha)}`);
-      const data = await r.json();
-      const ocupadas = new Set((data || []).map(a => (a.hora || '').slice(0,5)));
-      slotsGrid.innerHTML = HORARIOS.map(h => {
-        const taken = ocupadas.has(h);
-        return `<button type="button" class="slot-btn${taken ? ' taken' : ''}" data-hora="${h}" ${taken ? 'disabled' : ''} aria-label="Turno ${h} ${taken ? 'reservado' : 'libre'}">${h}<small>${taken ? 'Reservado' : 'Libre'}</small></button>`;
-      }).join('');
+      const r = await fetch('/api/alquileres/grilla');
+      if (!r.ok) throw new Error('fetch failed');
+      gridData = await r.json();
+      renderDayPicker();
+      renderGrilla();
     } catch (e) {
-      slotsGrid.innerHTML = '<p class="slots-hint err">No pudimos consultar la disponibilidad. Probá de nuevo en un momento.</p>';
+      grillaDia.innerHTML = '<p style="grid-column:1/-1;color:#8e2a2d;text-align:center;padding:30px 10px;">No pudimos cargar la disponibilidad. Refrescá la página.</p>';
     }
   }
 
-  if (canchaSel) canchaSel.addEventListener('change', cargarDisponibilidad);
-  if (fechaInput) fechaInput.addEventListener('change', cargarDisponibilidad);
-
-  if (slotsGrid) {
-    slotsGrid.addEventListener('click', (e) => {
-      const b = e.target.closest('.slot-btn');
-      if (!b || b.classList.contains('taken') || b.disabled) return;
-      slotsGrid.querySelectorAll('.slot-btn').forEach(x => x.classList.remove('selected'));
-      b.classList.add('selected');
-      horaInput.value = b.dataset.hora;
-      btnEnv.disabled = false;
+  function renderDayPicker() {
+    if (!gridData) return;
+    dayPicker.innerHTML = gridData.dias.map((d, i) => `
+      <button class="day-btn ${i === activeDayIdx ? 'active' : ''}" data-idx="${i}" role="tab" aria-selected="${i === activeDayIdx}">
+        <div class="dow">${d.dia_corto}</div>
+        <div class="dnum">${d.dia_num}</div>
+      </button>
+    `).join('');
+    dayPicker.querySelectorAll('.day-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        activeDayIdx = Number(b.dataset.idx);
+        renderDayPicker();
+        renderGrilla();
+      });
     });
   }
 
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!form.reportValidity()) return;
-      if (!horaInput.value) {
-        msgEl.className = 'form-msg err';
-        msgEl.textContent = 'Elegí un turno libre antes de enviar.';
-        return;
-      }
+  function renderGrilla() {
+    if (!gridData) return;
+    const dia = gridData.dias[activeDayIdx];
+    const cfgById = Object.fromEntries(gridData.canchas.map(c => [c.id, c]));
 
-      const fd = new FormData(form);
-      const datos = Object.fromEntries(fd.entries());
-      const email = (datos.email || '').trim();
-      const clienteCompuesto = `${datos.cliente.trim()}${email ? ` · ${email}` : ''}`;
+    grillaDia.innerHTML = gridData.canchas.map(c => {
+      const slots = dia.slots.filter(s => s.cancha === c.id);
+      return `
+        <div class="col-cancha">
+          <div class="col-head">Cancha ${c.numero} — ${c.nombre}<small>${c.tipo}</small></div>
+          ${slots.map(s => {
+            if (s.estado === 'libre') {
+              return `<button class="slot libre" data-cancha="${s.cancha}" data-hora="${s.hora}" data-fecha="${dia.fecha}" data-precio="${c.precio}" data-cnum="${c.numero}" data-cname="${c.nombre}" aria-label="Reservar cancha ${c.numero} ${s.hora} a ${s.hora+1} hs">
+                <span class="slot-hora">${s.hora}:00 – ${s.hora+1}:00</span>
+                <span class="slot-estado">Reservar</span>
+              </button>`;
+            } else if (s.estado === 'fijo') {
+              return `<div class="slot fijo" aria-label="Turno fijo — ${s.cliente || 'reservado'}">
+                <span><span class="slot-hora">${s.hora}:00 – ${s.hora+1}:00</span><span class="slot-cliente">${s.cliente || ''}</span></span>
+                <span class="slot-estado">Fijo</span>
+              </div>`;
+            } else {
+              return `<div class="slot ocupado" aria-label="Turno ocupado">
+                <span class="slot-hora">${s.hora}:00 – ${s.hora+1}:00</span>
+                <span class="slot-estado">Ocupado</span>
+              </div>`;
+            }
+          }).join('')}
+        </div>
+      `;
+    }).join('');
 
-      const payload = {
-        cancha: datos.cancha,
-        fecha: datos.fecha,
-        hora: datos.hora,
-        cliente: clienteCompuesto,
-        telefono: (datos.telefono || '').trim(),
-        monto: 0,
-        pagado: false,
-      };
-
-      [...form.elements].forEach(el => el.disabled = true);
-      msgEl.className = 'form-msg';
-      msgEl.textContent = 'Enviando…';
-
-      try {
-        const r = await fetch('/api/alquileres', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        const data = await r.json();
-
-        if (r.ok) {
-          msgEl.className = 'form-msg ok';
-          msgEl.innerHTML = `✓ Recibimos tu solicitud. Te contactamos al <b>${datos.telefono}</b> para confirmar.`;
-          form.reset();
-          horaInput.value = '';
-          slotsGrid.innerHTML = '<p class="slots-hint">Elegí cancha y fecha para ver los turnos libres.</p>';
-          btnEnv.disabled = true;
-        } else if (r.status === 409) {
-          msgEl.className = 'form-msg err';
-          msgEl.textContent = 'Ese turno se reservó recién. Refrescá la disponibilidad y probá con otro.';
-          cargarDisponibilidad();
-        } else {
-          msgEl.className = 'form-msg err';
-          msgEl.textContent = 'No pudimos enviar la solicitud: ' + (data.error || 'error desconocido');
-        }
-      } catch (err) {
-        msgEl.className = 'form-msg err';
-        msgEl.textContent = 'Error de conexión. Llamanos al 4501-8730.';
-      } finally {
-        [...form.elements].forEach(el => el.disabled = false);
-        // Re-disable submit si el usuario no tiene un slot todavía
-        if (!horaInput.value) btnEnv.disabled = true;
-      }
+    grillaDia.querySelectorAll('.slot.libre').forEach(b => {
+      b.addEventListener('click', () => abrirModal(b.dataset));
     });
   }
+
+  function abrirModal(d) {
+    slotSeleccionado = d;
+    const [y, m, day] = d.fecha.split('-').map(Number);
+    const jsDate = new Date(y, m - 1, day);
+    const diaNombre = DIAS_LARGO[jsDate.getDay()];
+    const hora = Number(d.hora);
+    rmCancha.textContent = `Cancha ${d.cnum} — ${d.cname}`;
+    rmTitle.textContent = `${diaNombre} ${day} · ${hora} a ${hora+1} hs`;
+    rmPrecio.innerHTML = fmtPrecio(d.precio) + '<small> · 1 hora</small>';
+    rmMsg.textContent = '';
+    rmMsg.className = 'rm-msg';
+    // WhatsApp fallback
+    const textWsp = encodeURIComponent(`Hola! Quiero consultar por el alquiler de la Cancha ${d.cnum} (${d.cname}) para el ${diaNombre} ${day}/${m} de ${hora} a ${hora+1} hs.`);
+    btnWspReserva.href = `https://wa.me/5491145018730?text=${textWsp}`;
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('rm-nombre')?.focus(), 50);
+  }
+
+  function cerrarModal() {
+    modal.hidden = true;
+    document.body.style.overflow = '';
+    slotSeleccionado = null;
+    reservaForm.reset();
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target.closest('[data-close]')) cerrarModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.hidden) cerrarModal();
+  });
+
+  reservaForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!slotSeleccionado) return;
+    if (!reservaForm.reportValidity()) return;
+
+    const fd = new FormData(reservaForm);
+    const payload = {
+      cancha: slotSeleccionado.cancha,
+      fecha: slotSeleccionado.fecha,
+      hora: Number(slotSeleccionado.hora),
+      cliente: String(fd.get('cliente') || '').trim(),
+      telefono: String(fd.get('telefono') || '').trim(),
+      email: String(fd.get('email') || '').trim(),
+    };
+
+    [...reservaForm.elements].forEach(el => el.disabled = true);
+    rmMsg.className = 'rm-msg';
+    rmMsg.textContent = 'Generando tu link de pago…';
+
+    try {
+      const r = await fetch('/api/alquileres/reservar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await r.json();
+      if (r.ok && data.init_point) {
+        rmMsg.className = 'rm-msg ok';
+        rmMsg.textContent = 'Redirigiendo a MercadoPago…';
+        window.location.href = data.init_point;
+      } else if (r.status === 409) {
+        rmMsg.className = 'rm-msg err';
+        rmMsg.textContent = 'Alguien reservó este turno recién. Cerrá y elegí otro.';
+      } else {
+        rmMsg.className = 'rm-msg err';
+        rmMsg.textContent = 'No pudimos generar el pago: ' + (data.error || 'intentá de nuevo');
+      }
+    } catch (err) {
+      rmMsg.className = 'rm-msg err';
+      rmMsg.textContent = 'Error de conexión. Llamanos al 4501-8730.';
+    } finally {
+      [...reservaForm.elements].forEach(el => el.disabled = false);
+    }
+  });
+
+  // Manejo del retorno desde MP
+  (function handleMpReturn() {
+    const params = new URLSearchParams(window.location.search);
+    const pago = params.get('pago');
+    const alq = params.get('alq');
+    if (!pago || !alq) return;
+
+    // Limpiar URL
+    const clean = window.location.pathname + window.location.hash;
+    history.replaceState(null, '', clean);
+
+    // Mostrar toast simple
+    const div = document.createElement('div');
+    div.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:2000;padding:16px 22px;border-radius:8px;font-family:Manrope,sans-serif;font-weight:700;box-shadow:0 12px 40px rgba(0,0,0,.2);max-width:90%;text-align:center;';
+    if (pago === 'ok') {
+      div.style.background = '#005020'; div.style.color = '#fff';
+      div.textContent = '✓ ¡Listo! Tu reserva está confirmada. Te esperamos en el club.';
+    } else if (pago === 'pendiente') {
+      div.style.background = '#e0a020'; div.style.color = '#fff';
+      div.textContent = 'Tu pago quedó pendiente de acreditación. Te avisamos apenas se confirme.';
+    } else {
+      div.style.background = '#e0282e'; div.style.color = '#fff';
+      div.textContent = 'El pago no se completó. Podés intentarlo de nuevo.';
+    }
+    document.body.appendChild(div);
+    setTimeout(() => { div.style.transition = 'opacity .4s'; div.style.opacity = '0'; setTimeout(() => div.remove(), 400); }, 6000);
+  })();
+
+  cargarGrilla();
 </script>
 </body>
 </html>
