@@ -428,7 +428,75 @@ app.post('/api/cuotas/emitir', requireWrite, async (req, res) => {
     .select();
   if (insErr) return res.status(500).json({ error: insErr.message });
 
+  await recalcularMorosidad();
   res.json({ mensaje: `${rows.length} cuotas emitidas para ${periodo} (social $${cuotaSocial} + disciplinas)` });
+});
+
+// ── Recálculo de morosidad con período de gracia ──
+async function getGraciaDias() {
+  const { data } = await supabase.from('config').select('valor').eq('clave', 'gracia_dias').maybeSingle();
+  return (data && Number(data.valor)) || 5;
+}
+async function recalcularMorosidad() {
+  const gracia = await getGraciaDias();
+  const hoy = Date.now();
+  const [{ data: socios }, { data: cuotas }] = await Promise.all([
+    supabase.from('socios').select('id, beca, estado_cuota, saldo').eq('activo', true),
+    supabase.from('cuotas').select('socio_id, monto, pagado, fecha_venc').neq('estado', 'pagada'),
+  ]);
+  const porSocio = {};
+  (cuotas || []).forEach(c => { (porSocio[c.socio_id] = porSocio[c.socio_id] || []).push(c); });
+  let bloqueados = 0, conDeuda = 0;
+  for (const s of (socios || [])) {
+    let estado, saldo;
+    if (s.beca) { estado = 'Al dia'; saldo = 0; }
+    else {
+      const impagas = porSocio[s.id] || [];
+      const deuda = impagas.reduce((a, c) => a + (Number(c.monto) - Number(c.pagado || 0)), 0);
+      const vencida = impagas.some(c => new Date(c.fecha_venc + 'T00:00:00').getTime() + gracia * 86400000 < hoy);
+      estado = vencida ? 'Suspendido' : 'Al dia';
+      saldo = deuda > 0 ? -deuda : 0;
+    }
+    if (estado === 'Suspendido') bloqueados++;
+    if (saldo < 0) conDeuda++;
+    if (s.estado_cuota !== estado || Number(s.saldo) !== saldo) {
+      await supabase.from('socios').update({ estado_cuota: estado, saldo }).eq('id', s.id);
+    }
+  }
+  return { bloqueados, conDeuda, gracia };
+}
+app.post('/api/cuotas/recalcular', requireWrite, async (req, res) => {
+  try { const r = await recalcularMorosidad(); res.json({ mensaje: `Estado actualizado · ${r.bloqueados} inhabilitados por mora (gracia ${r.gracia} días)`, ...r }); }
+  catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Resumen de cuotas emitidas por período
+app.get('/api/cuotas/resumen', async (req, res) => {
+  const { data, error } = await supabase.from('cuotas').select('periodo, monto, pagado, estado, fecha_venc');
+  if (error) return res.status(500).json({ error: error.message });
+  const map = {};
+  (data || []).forEach(c => {
+    const p = map[c.periodo] || (map[c.periodo] = { periodo: c.periodo, fecha_venc: c.fecha_venc, cantidad: 0, total: 0, pagadas: 0, pendientes: 0, recaudado: 0 });
+    p.cantidad++; p.total += Number(c.monto);
+    if (c.estado === 'pagada') { p.pagadas++; p.recaudado += Number(c.pagado || c.monto); }
+    else p.pendientes++;
+    if (c.fecha_venc) p.fecha_venc = c.fecha_venc;
+  });
+  res.json({ periodos: Object.values(map).sort((a, b) => b.periodo.localeCompare(a.periodo)) });
+});
+
+// Pago a nivel socio: marca sus cuotas impagas como pagadas + ingreso + queda al día
+app.post('/api/socios/:id/pagar', requireWrite, async (req, res) => {
+  const { monto, metodo_pago, categoria, concepto } = req.body || {};
+  const id = req.params.id;
+  const hoy = new Date().toISOString().split('T')[0];
+  await supabase.from('cuotas').update({ estado: 'pagada', fecha_pago: hoy, metodo_pago: metodo_pago || 'efectivo' })
+    .eq('socio_id', id).neq('estado', 'pagada');
+  await supabase.from('socios').update({ estado_cuota: 'Al dia', saldo: 0 }).eq('id', id);
+  if (monto && Number(monto) > 0) {
+    await supabase.from('ingresos').insert({ concepto: concepto || 'Cuota', monto: Number(monto), categoria: categoria || 'Cuota deportiva', fecha: hoy });
+  }
+  res.json({ mensaje: 'Pago registrado' });
 });
 
 app.post('/api/cuotas/:id/pagar', requireWrite, async (req, res) => {

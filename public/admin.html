@@ -672,7 +672,7 @@ async function renderSocios() {
 }
 
 pages.cuotas = async () => {
-  const [dash, mor] = await Promise.all([ api('/dashboard'), api('/cuotas/morosos') ]);
+  const [dash, mor, resumen] = await Promise.all([ api('/dashboard'), api('/cuotas/morosos'), api('/cuotas/resumen') ]);
   const morosos = (mor?.morosos || []).slice(0, 10);
   const total = dash?.socios?.total || 0;
   const alDia = dash?.socios?.al_dia || 0;
@@ -701,7 +701,10 @@ pages.cuotas = async () => {
     </div>
     <div class="card">
       <h3 style="margin:0 0 10px">Operaciones</h3>
-      ${puedeEditar('cuotas') ? '<div class="row"><button class="btn alt" onclick="emitirCuotas()">📅 Emitir cuotas del período</button></div>' : ''}
+      ${puedeEditar('cuotas') ? `<div class="row" style="gap:8px;flex-wrap:wrap">
+        <button class="btn alt" onclick="emitirCuotas()">📅 Emitir cuotas del período</button>
+        <button class="btn" onclick="actualizarMorosidad()">🔄 Actualizar morosidad</button>
+      </div>` : ''}
       <p class="mini" style="margin-top:12px"><b>Flujo automatizado (próximamente):</b></p>
       <ul style="margin:0;padding-left:18px;line-height:1.7">
         <li>Día 5: emisión masiva de cuotas del mes.</li>
@@ -711,6 +714,20 @@ pages.cuotas = async () => {
         <li>Día 25: lista priorizada de cobranzas por IA.</li>
       </ul>
     </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 10px">Cuotas emitidas</h3>
+    <table><thead><tr><th>Período</th><th>Vence</th><th>Socios</th><th>Total emitido</th><th>Pagadas</th><th>Pendientes</th><th>Recaudado</th></tr></thead><tbody>
+      ${(resumen?.periodos || []).length ? resumen.periodos.map(p => `<tr>
+        <td><b>${esc(p.periodo)}</b></td>
+        <td class="mini">${p.fecha_venc ? fmtF(p.fecha_venc) : '—'}</td>
+        <td>${p.cantidad}</td>
+        <td>${fmtM(p.total)}</td>
+        <td><span class="badge b-ok">${p.pagadas}</span></td>
+        <td><span class="badge ${p.pendientes ? 'b-err' : 'b-ok'}">${p.pendientes}</span></td>
+        <td><b style="color:var(--verde)">${fmtM(p.recaudado)}</b></td>
+      </tr>`).join('') : '<tr><td colspan="7" style="color:#999;padding:16px">Todavía no emitiste cuotas. Usá "Emitir cuotas del período".</td></tr>'}
+    </tbody></table>
   </div>`;
 };
 
@@ -1265,7 +1282,12 @@ pages.config = async () => {
       <label style="display:block;margin-bottom:6px">Cuota social <span class="mini">(la pagan todos los socios)</span>
         <div class="row" style="gap:8px;margin-top:4px">
           <input id="cfgCuotaSocial" type="number" step="100" value="${cfg?.cuota_social ?? 1000}" style="width:140px" ${puedeEditar('config')?'':'disabled'}>
-          ${puedeEditar('config') ? '<button class="btn" onclick="guardarCuotaSocial()">Guardar</button>' : ''}
+        </div>
+      </label>
+      <label style="display:block;margin-bottom:6px">Días de gracia <span class="mini">(luego del vencimiento, antes de bloquear el molinete)</span>
+        <div class="row" style="gap:8px;margin-top:4px">
+          <input id="cfgGracia" type="number" step="1" value="${cfg?.gracia_dias ?? 5}" style="width:140px" ${puedeEditar('config')?'':'disabled'}>
+          ${puedeEditar('config') ? '<button class="btn" onclick="guardarConfigCuotas()">Guardar</button>' : ''}
         </div>
       </label>
       <h4 class="mini" style="margin:14px 0 4px">CUOTA DEPORTIVA POR DISCIPLINA</h4>
@@ -1414,17 +1436,11 @@ window.registrarPago = async (id) => {
     ],
     submitLabel: 'Registrar pago',
     onSubmit: async (v) => {
-      // 1) Habilitar al socio: al dia, saldo 0
-      const r1 = await api('/socios/' + id, { method: 'PUT', body: { estado_cuota: 'Al dia', saldo: 0 } });
-      if (!r1 || r1.error) { toast('Error: ' + ((r1 && r1.error) || 'no se pudo guardar'), 'err'); return true; }
-      // 2) Registrar el ingreso en Finanzas
-      const r2 = await api('/ingresos', { method: 'POST', body: {
-        concepto: `${v.tipo_cuota} — ${nombre} (${v.metodo_pago})`,
-        monto: Number(v.monto),
-        categoria: v.tipo_cuota,
-        fecha: v.fecha,
+      const r = await api('/socios/' + id + '/pagar', { method: 'POST', body: {
+        monto: Number(v.monto), metodo_pago: v.metodo_pago,
+        categoria: v.tipo_cuota, concepto: `${v.tipo_cuota} — ${nombre} (${v.metodo_pago})`,
       }});
-      if (r2 && r2.error) { toast('Socio habilitado, pero falló el ingreso: ' + r2.error, 'err'); return false; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo registrar el pago'), 'err'); return true; }
       toast(`Pago registrado: ${nombre} quedó HABILITADO`);
       const p = nav.querySelector('button.active')?.dataset.page;
       if (p) render(p); else renderSocios();
@@ -1848,13 +1864,22 @@ window.emitirCuotas = async () => {
   });
 };
 
-window.guardarCuotaSocial = async () => {
-  const v = Number(document.getElementById('cfgCuotaSocial').value);
-  if (isNaN(v)) { toast('Monto inválido', 'err'); return; }
-  const r = await api('/config', { method: 'PUT', body: { cuota_social: v } });
+window.actualizarMorosidad = async () => {
+  const r = await api('/cuotas/recalcular', { method: 'POST', body: {} });
+  if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo'), 'err'); return; }
+  window._precios = null; // refrescar saldos del padrón
+  toast(r.mensaje || 'Morosidad actualizada');
+  render('cuotas');
+};
+
+window.guardarConfigCuotas = async () => {
+  const social = Number(document.getElementById('cfgCuotaSocial').value);
+  const gracia = Number(document.getElementById('cfgGracia').value);
+  if (isNaN(social) || isNaN(gracia)) { toast('Valores inválidos', 'err'); return; }
+  const r = await api('/config', { method: 'PUT', body: { cuota_social: social, gracia_dias: gracia } });
   if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar'), 'err'); return; }
-  window._cuotaSocial = v;
-  toast('Cuota social actualizada');
+  window._cuotaSocial = social;
+  toast('Configuración de cuotas actualizada');
 };
 window.guardarPrecioDisc = async (id) => {
   const v = Number(document.getElementById('prec-' + id).value);
