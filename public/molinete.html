@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSyD Parque · Molinete</title>
+<meta name="theme-color" content="#005020">
+<link rel="icon" type="image/png" href="/logo.png">
+<style>
+  :root {
+    --verde: #005020;
+    --verde-osc: #003d18;
+    --rojo: #e0282e;
+    --gris: #0a0a0a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%; width: 100%;
+    background: var(--gris);
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Manrope, Roboto, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body { display: flex; flex-direction: column; }
+
+  header {
+    padding: 18px 28px;
+    background: linear-gradient(135deg, var(--verde), var(--verde-osc));
+    border-bottom: 5px solid var(--rojo);
+    display: flex; align-items: center; gap: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.4);
+  }
+  header img { height: 44px; }
+  header .titulo { font-size: 18px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  header .sub { font-size: 11px; opacity: .8; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+  header .puerta {
+    margin-left: auto;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    background: rgba(255,255,255,.1); padding: 6px 12px; border-radius: 4px;
+  }
+  header .reloj { font-size: 13px; font-variant-numeric: tabular-nums; opacity: .9; }
+
+  main {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    transition: background .25s ease;
+    background: var(--gris);
+  }
+  main.permitido { background: radial-gradient(circle at center, #0a7a35 0%, #003d18 100%); }
+  main.denegado  { background: radial-gradient(circle at center, #c41e24 0%, #6b0e12 100%); }
+  main.leyendo   { background: radial-gradient(circle at center, #1a2c20 0%, #0a0a0a 100%); }
+
+  .card {
+    text-align: center;
+    padding: 0 40px;
+    max-width: 90vw;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+
+  .icono { font-size: 220px; line-height: 1; margin-bottom: 16px; }
+  .resultado {
+    font-size: 88px; font-weight: 800; letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow: 0 4px 16px rgba(0,0,0,.6);
+    margin-bottom: 24px;
+  }
+  .nombre {
+    font-size: 52px; font-weight: 700;
+    margin-bottom: 14px;
+    text-shadow: 0 2px 8px rgba(0,0,0,.5);
+  }
+  .meta {
+    font-size: 22px; opacity: .9; letter-spacing: 1px;
+    text-transform: uppercase; font-weight: 500;
+  }
+  .motivo {
+    font-size: 30px; opacity: .98; font-weight: 600;
+    margin-top: 10px; max-width: 80vw;
+  }
+
+  /* Carnet del socio */
+  .foto {
+    width: 240px; height: 240px; border-radius: 50%;
+    object-fit: cover; margin: 0 auto 26px;
+    border: 6px solid rgba(255,255,255,.85);
+    box-shadow: 0 8px 32px rgba(0,0,0,.45);
+    background: #1a2c20;
+  }
+  .foto-placeholder {
+    width: 240px; height: 240px; border-radius: 50%;
+    margin: 0 auto 26px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 92px; font-weight: 700; color: #fff;
+    border: 6px solid rgba(255,255,255,.85);
+    box-shadow: 0 8px 32px rgba(0,0,0,.45);
+    background: rgba(255,255,255,.15);
+    text-transform: uppercase;
+  }
+  .datos {
+    display: inline-flex; flex-direction: column; gap: 10px;
+    margin-top: 6px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 4px; }
+  .chip {
+    font-size: 20px; font-weight: 600; letter-spacing: .5px;
+    padding: 8px 18px; border-radius: 999px;
+    background: rgba(255,255,255,.18);
+    border: 1px solid rgba(255,255,255,.25);
+  }
+  .nro {
+    font-size: 22px; font-weight: 700; letter-spacing: 3px;
+    font-variant-numeric: tabular-nums;
+    opacity: .9; margin-bottom: 4px;
+  }
+
+  .idle-titulo {
+    font-size: 88px; font-weight: 300; letter-spacing: 6px;
+    text-transform: uppercase; color: rgba(255,255,255,.85);
+    margin-bottom: 24px;
+  }
+  .idle-sub {
+    font-size: 24px; opacity: .55; letter-spacing: 4px;
+    text-transform: uppercase; font-weight: 400;
+  }
+  .pulse {
+    display: inline-block; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--verde); margin-right: 14px;
+    animation: pulse 1.6s infinite ease-in-out;
+    vertical-align: middle;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: .3; transform: scale(.85); }
+    50%      { opacity: 1;  transform: scale(1.15); box-shadow: 0 0 24px var(--verde); }
+  }
+
+  footer {
+    padding: 10px 28px;
+    font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+    opacity: .5; display: flex; justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,.06);
+  }
+  footer .stats { display: flex; gap: 22px; }
+  footer span b { color: #fff; font-weight: 700; }
+
+  /* Input invisible que captura el HID */
+  #buffer { position: absolute; left: -9999px; opacity: 0; }
+</style>
+</head>
+<body>
+  <header>
+    <img src="/logo.png" alt="">
+    <div>
+      <div class="titulo">CSyD Parque</div>
+      <div class="sub">Control de acceso</div>
+    </div>
+    <div class="puerta" id="puerta">Molinete Principal</div>
+    <div class="reloj" id="reloj">--:--:--</div>
+  </header>
+
+  <main id="main" class="idle">
+    <div class="card" id="card">
+      <div class="idle-titulo"><span class="pulse"></span>Acercá tu carnet</div>
+      <div class="idle-sub">Sistema listo · esperando lectura</div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Club Social y Deportivo Parque · Desde 1949</span>
+    <div class="stats">
+      <span>OK <b id="okCount">0</b></span>
+      <span>Denegados <b id="errCount">0</b></span>
+      <span>Última <b id="lastTime">—</b></span>
+    </div>
+  </footer>
+
+  <input type="text" id="buffer" autofocus>
+
+<script>
+(() => {
+  const main = document.getElementById('main');
+  const card = document.getElementById('card');
+  const buffer = document.getElementById('buffer');
+  const okCountEl = document.getElementById('okCount');
+  const errCountEl = document.getElementById('errCount');
+  const lastTimeEl = document.getElementById('lastTime');
+  const relojEl = document.getElementById('reloj');
+  const puerta = new URLSearchParams(location.search).get('puerta') || 'Molinete Principal';
+  document.getElementById('puerta').textContent = puerta;
+
+  let okCount = 0, errCount = 0;
+  let lastTag = '', lastTagAt = 0;
+  let resetTimer = null;
+  let busy = false;
+
+  const DEBOUNCE_MS = 2500;   // mismo tag dentro de 2.5s se ignora
+  const RESET_MS = 3500;      // vuelve a "idle" tras 3.5s
+  const MIN_LEN = 6, MAX_LEN = 14; // largo plausible de un RFID
+
+  // Reloj
+  function tickReloj() {
+    const d = new Date();
+    relojEl.textContent = d.toLocaleTimeString('es-AR', { hour12: false });
+  }
+  tickReloj(); setInterval(tickReloj, 1000);
+
+  // Audio: beeps con WebAudio (sin assets)
+  let audioCtx;
+  function beep(freq, durMs, vol = 0.4) {
+    try {
+      audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'square'; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + durMs/1000);
+      osc.start(); osc.stop(audioCtx.currentTime + durMs/1000);
+    } catch(e) {}
+  }
+  function beepOk()      { beep(1320, 120); setTimeout(() => beep(1760, 180), 130); }
+  function beepDenegado(){ beep(220, 600, 0.5); }
+
+  // Captura del lector RFID (modo HID = teclado)
+  // Acumulamos dígitos hasta Enter; ignoramos otros caracteres.
+  let acc = '';
+  let lastKeyAt = 0;
+  document.addEventListener('keydown', (ev) => {
+    // Si tarda más de 200ms entre teclas, no es el lector — descartar buffer
+    const now = Date.now();
+    if (now - lastKeyAt > 200) acc = '';
+    lastKeyAt = now;
+
+    if (ev.key === 'Enter') {
+      const tag = acc.trim();
+      acc = '';
+      if (tag.length >= MIN_LEN && tag.length <= MAX_LEN && /^\d+$/.test(tag)) {
+        procesarTag(tag);
+      }
+      ev.preventDefault();
+      return;
+    }
+    if (ev.key.length === 1 && /[0-9]/.test(ev.key)) {
+      acc += ev.key;
+    }
+  });
+
+  // Mantener foco siempre — por si el usuario toca la pantalla
+  setInterval(() => buffer.focus(), 1000);
+
+  async function procesarTag(tag) {
+    const now = Date.now();
+    if (busy) return;
+    if (tag === lastTag && (now - lastTagAt) < DEBOUNCE_MS) return; // debounce
+    lastTag = tag; lastTagAt = now;
+
+    busy = true;
+    if (resetTimer) { clearTimeout(resetTimer); resetTimer = null; }
+    renderLeyendo(tag);
+
+    let data;
+    try {
+      const r = await fetch('/api/acceso/validar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rfid: tag, puerta }),
+      });
+      data = await r.json();
+    } catch(err) {
+      data = { resultado: 'DENEGADO', motivo: 'Sin conexión al servidor' };
+    }
+
+    if (data.resultado === 'OK') {
+      okCount++; okCountEl.textContent = okCount;
+      renderPermitido(data);
+      beepOk();
+    } else {
+      errCount++; errCountEl.textContent = errCount;
+      renderDenegado(data, tag);
+      beepDenegado();
+    }
+    lastTimeEl.textContent = new Date().toLocaleTimeString('es-AR', { hour12: false });
+
+    resetTimer = setTimeout(() => {
+      renderIdle();
+      busy = false;
+    }, RESET_MS);
+  }
+
+  function renderIdle() {
+    main.className = 'idle';
+    card.innerHTML = `
+      <div class="idle-titulo"><span class="pulse"></span>Acercá tu carnet</div>
+      <div class="idle-sub">Sistema listo · esperando lectura</div>
+    `;
+  }
+  function renderLeyendo(tag) {
+    main.className = 'leyendo';
+    card.innerHTML = `
+      <div class="icono">⏳</div>
+      <div class="resultado" style="font-size:54px">Leyendo…</div>
+      <div class="meta">RFID ${tag}</div>
+    `;
+  }
+  function carnetNro(id) {
+    return id ? 'CP-' + String(id).padStart(4, '0') : '';
+  }
+  function iniciales(nombre) {
+    const p = String(nombre || '').trim().split(/\s+/);
+    return ((p[0]?.[0] || '') + (p[1]?.[0] || '')).toUpperCase() || '?';
+  }
+  function fotoHtml(s) {
+    if (s.foto_url) {
+      return `<img class="foto" src="${escapeHtml(s.foto_url)}" alt=""
+                onerror="this.outerHTML='<div class=&quot;foto-placeholder&quot;>${iniciales(s.nombre)}</div>'">`;
+    }
+    return `<div class="foto-placeholder">${iniciales(s.nombre)}</div>`;
+  }
+  function disciplinasHtml(s) {
+    const ds = Array.isArray(s.disciplinas) ? s.disciplinas : [];
+    if (!ds.length) return '';
+    return `<div class="chips">${ds.map(d => `<span class="chip">${escapeHtml(d)}</span>`).join('')}</div>`;
+  }
+
+  function renderPermitido(data) {
+    const s = data.socio || {};
+    main.className = 'permitido';
+    card.innerHTML = `
+      ${fotoHtml(s)}
+      <div class="resultado" style="font-size:60px;margin-bottom:18px">✅ Permitido</div>
+      <div class="nro">${carnetNro(s.id)}</div>
+      <div class="nombre">${escapeHtml(s.nombre || 'Socio')}</div>
+      <div class="chips">
+        <span class="chip">${escapeHtml(s.categoria || 'Socio')}</span>
+      </div>
+      ${disciplinasHtml(s)}
+    `;
+  }
+  function renderDenegado(data, tag) {
+    const s = data.socio || {};
+    main.className = 'denegado';
+    if (s.nombre) {
+      card.innerHTML = `
+        ${fotoHtml(s)}
+        <div class="resultado" style="font-size:60px;margin-bottom:18px">⛔ Denegado</div>
+        <div class="nro">${carnetNro(s.id)}</div>
+        <div class="nombre">${escapeHtml(s.nombre)}</div>
+        <div class="motivo">${escapeHtml(data.motivo || 'Acceso no autorizado')}</div>
+      `;
+    } else {
+      card.innerHTML = `
+        <div class="icono">⛔</div>
+        <div class="resultado">Denegado</div>
+        <div class="motivo">${escapeHtml(data.motivo || 'Acceso no autorizado')}</div>
+        <div class="meta" style="margin-top:10px;opacity:.7">RFID ${tag}</div>
+      `;
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
+  // Fullscreen al primer click
+  document.addEventListener('click', () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    buffer.focus();
+  }, { once: true });
+})();
+</script>
+</body>
+</html>

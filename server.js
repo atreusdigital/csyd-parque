@@ -80,7 +80,121 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 app.get('/api/admin/check', requireAdmin, (req, res) => {
-  res.json({ ok: true, exp: req.admin.exp });
+  res.json({ ok: true, exp: req.admin.exp, rol: req.admin.rol || 'admin', nombre: req.admin.nombre || 'Administrador' });
+});
+
+// ═══════════════════════════════════════════════════════════
+//  USUARIOS, ROLES Y PERMISOS
+// ═══════════════════════════════════════════════════════════
+const ROLES_VALIDOS = ['admin', 'tesoreria', 'recepcion', 'profe'];
+
+// Hashing de contraseñas con scrypt nativo (sin dependencias extra)
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+function verifyPassword(password, stored) {
+  const [salt, hash] = String(stored || '').split(':');
+  if (!salt || !hash) return false;
+  const calc = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  const a = Buffer.from(hash, 'hex'), b = Buffer.from(calc, 'hex');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// Middleware: exige token válido + rol dentro de la lista
+function requireRole(...roles) {
+  return (req, res, next) => {
+    const hdr = req.headers.authorization || '';
+    const payload = verifyToken(hdr.replace(/^Bearer\s+/i, '').trim());
+    if (!payload) return res.status(401).json({ error: 'No autorizado' });
+    if (roles.length && !roles.includes(payload.rol)) {
+      return res.status(403).json({ error: 'No tenés permiso para esta acción' });
+    }
+    req.admin = payload;
+    next();
+  };
+}
+// Escritura operativa: todos menos el profe (que es solo lectura)
+const requireWrite = requireRole('admin', 'tesoreria', 'recepcion');
+
+// Login por usuario + contraseña (con admin maestro de respaldo)
+app.post('/api/auth/login', async (req, res) => {
+  const { usuario, password } = req.body || {};
+  if (!usuario || !password) return res.status(400).json({ error: 'Faltan usuario y contraseña' });
+
+  // Admin maestro: usuario "admin" + la clave histórica del sistema
+  if (String(usuario).trim().toLowerCase() === 'admin' && password === ADMIN_PASSWORD) {
+    return res.json({
+      token: signToken({ rol: 'admin', nombre: 'Administrador', usuario: 'admin', master: true }),
+      expiresAt: Date.now() + TOKEN_TTL_MS, rol: 'admin', nombre: 'Administrador',
+    });
+  }
+
+  // Usuarios reales (tabla usuarios)
+  const { data: u, error } = await supabase
+    .from('usuarios').select('*').eq('usuario', String(usuario).trim()).eq('activo', true).maybeSingle();
+  if (error) {
+    // La tabla usuarios puede no existir todavía (migración 009 pendiente): degradar a 401 limpio.
+    console.error('[auth/login] tabla usuarios:', error.message);
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+  }
+  if (!u || !verifyPassword(password, u.password_hash)) {
+    return res.status(401).json({ error: 'Usuario o contraseña incorrectos' });
+  }
+  res.json({
+    token: signToken({ id: u.id, rol: u.rol, nombre: u.nombre, usuario: u.usuario }),
+    expiresAt: Date.now() + TOKEN_TTL_MS, rol: u.rol, nombre: u.nombre,
+  });
+});
+
+app.get('/api/usuarios', requireRole('admin'), async (req, res) => {
+  const { data, error } = await supabase
+    .from('usuarios').select('id, nombre, usuario, rol, activo, created_at').order('nombre');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ total: data.length, usuarios: data });
+});
+
+app.post('/api/usuarios', requireRole('admin'), async (req, res) => {
+  const { nombre, usuario, password, rol } = req.body || {};
+  if (!nombre || !usuario || !password) return res.status(400).json({ error: 'Faltan nombre, usuario y contraseña' });
+  if (rol && !ROLES_VALIDOS.includes(rol)) return res.status(400).json({ error: 'Rol inválido' });
+  if (String(usuario).trim().toLowerCase() === 'admin') return res.status(400).json({ error: 'El usuario "admin" está reservado' });
+
+  const row = {
+    nombre, usuario: String(usuario).trim(),
+    password_hash: hashPassword(password),
+    rol: rol || 'recepcion', activo: true,
+  };
+  const { data, error } = await supabase.from('usuarios').insert(row).select('id, nombre, usuario, rol, activo').single();
+  if (error) {
+    if (error.code === '23505') return res.status(409).json({ error: 'Ese nombre de usuario ya existe' });
+    return res.status(500).json({ error: error.message });
+  }
+  res.status(201).json(data);
+});
+
+app.put('/api/usuarios/:id', requireRole('admin'), async (req, res) => {
+  const { nombre, rol, activo, password } = req.body || {};
+  if (rol && !ROLES_VALIDOS.includes(rol)) return res.status(400).json({ error: 'Rol inválido' });
+  const updates = {};
+  if (nombre !== undefined) updates.nombre = nombre;
+  if (rol !== undefined) updates.rol = rol;
+  if (activo !== undefined) updates.activo = !!activo;
+  if (password) updates.password_hash = hashPassword(password);
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Sin cambios' });
+
+  const { data, error } = await supabase
+    .from('usuarios').update(updates).eq('id', req.params.id).select('id, nombre, usuario, rol, activo').maybeSingle();
+  if (error) return res.status(500).json({ error: error.message });
+  if (!data) return res.status(404).json({ error: 'Usuario no encontrado' });
+  res.json(data);
+});
+
+app.delete('/api/usuarios/:id', requireRole('admin'), async (req, res) => {
+  const { error } = await supabase.from('usuarios').update({ activo: false }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ mensaje: 'Usuario dado de baja' });
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -142,7 +256,7 @@ app.post('/api/acceso/validar', async (req, res) => {
     resultado,
     motivo,
     accion: resultado === 'OK' ? 'ABRIR' : 'MANTENER_CERRADO',
-    socio: socio ? { id: socio.id, nombre: socio.nombre, categoria: socio.categoria, foto_url: socio.foto_url } : null,
+    socio: socio ? { id: socio.id, nombre: socio.nombre, categoria: socio.categoria, foto_url: socio.foto_url, disciplinas: Array.isArray(socio.disciplinas) ? socio.disciplinas : [] } : null,
     timestamp: new Date().toISOString(),
   });
 });
@@ -212,8 +326,8 @@ app.get('/api/socios/:id', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/socios', requireAdmin, async (req, res) => {
-  const { nombre, dni, rfid, categoria, telefono, email, disciplinas, genero, fecha_nacimiento } = req.body;
+app.post('/api/socios', requireWrite, async (req, res) => {
+  const { nombre, dni, rfid, categoria, estado_cuota, telefono, email, disciplinas, genero, fecha_nacimiento } = req.body;
   if (!nombre || !dni || !rfid) return res.status(400).json({ error: 'Campos requeridos: nombre, dni, rfid' });
 
   const { data: dupe } = await supabase
@@ -227,6 +341,7 @@ app.post('/api/socios', requireAdmin, async (req, res) => {
   const row = {
     nombre, dni, rfid,
     categoria: categoria || 'Activo',
+    estado_cuota: estado_cuota || 'Al dia',
     telefono: telefono || '',
     email: email || '',
     disciplinas: Array.isArray(disciplinas) ? disciplinas : [],
@@ -243,7 +358,7 @@ app.post('/api/socios', requireAdmin, async (req, res) => {
   res.status(201).json(data);
 });
 
-app.put('/api/socios/:id', requireAdmin, async (req, res) => {
+app.put('/api/socios/:id', requireWrite, async (req, res) => {
   const allowed = ['nombre','dni','rfid','categoria','estado_cuota','saldo','telefono','email','disciplinas','foto_url','activo','genero','fecha_nacimiento'];
   const updates = {};
   for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
@@ -261,7 +376,7 @@ app.put('/api/socios/:id', requireAdmin, async (req, res) => {
   res.json(data);
 });
 
-app.delete('/api/socios/:id', requireAdmin, async (req, res) => {
+app.delete('/api/socios/:id', requireWrite, async (req, res) => {
   const { error } = await supabase
     .from('socios')
     .update({ activo: false })
@@ -273,7 +388,7 @@ app.delete('/api/socios/:id', requireAdmin, async (req, res) => {
 // ═══════════════════════════════════════════════════════════
 //  CUOTAS
 // ═══════════════════════════════════════════════════════════
-app.post('/api/cuotas/emitir', requireAdmin, async (req, res) => {
+app.post('/api/cuotas/emitir', requireWrite, async (req, res) => {
   const { periodo, monto_activo, monto_cadete, monto_familiar, fecha_venc } = req.body;
   if (!periodo) return res.status(400).json({ error: 'Falta "periodo"' });
 
@@ -303,7 +418,7 @@ app.post('/api/cuotas/emitir', requireAdmin, async (req, res) => {
   res.json({ mensaje: `${data.length} cuotas emitidas para ${periodo}` });
 });
 
-app.post('/api/cuotas/:id/pagar', requireAdmin, async (req, res) => {
+app.post('/api/cuotas/:id/pagar', requireWrite, async (req, res) => {
   const { monto, metodo_pago } = req.body;
 
   const { data: cuota, error: e1 } = await supabase
@@ -358,8 +473,8 @@ app.get('/api/cuotas/morosos', async (req, res) => {
     .from('socios')
     .select('id, nombre, rfid, telefono, email, saldo, estado_cuota')
     .eq('activo', true)
-    .or('estado_cuota.eq.Moroso,saldo.lt.0')
-    .order('saldo', { ascending: true });
+    .neq('estado_cuota', 'Al dia')
+    .order('nombre');
   if (error) return res.status(500).json({ error: error.message });
   res.json({ total: data.length, morosos: data });
 });
@@ -374,7 +489,7 @@ app.get('/api/ingresos', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/ingresos', requireAdmin, async (req, res) => {
+app.post('/api/ingresos', requireWrite, async (req, res) => {
   const { fecha, concepto, monto, categoria } = req.body;
   if (!concepto || !monto || !categoria) return res.status(400).json({ error: 'Faltan campos' });
 
@@ -393,7 +508,7 @@ app.get('/api/gastos', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/gastos', requireAdmin, async (req, res) => {
+app.post('/api/gastos', requireWrite, async (req, res) => {
   const { fecha, concepto, monto, categoria } = req.body;
   if (!concepto || !monto || !categoria) return res.status(400).json({ error: 'Faltan campos' });
 
@@ -655,7 +770,7 @@ app.get('/api/alquileres', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/alquileres', requireAdmin, async (req, res) => {
+app.post('/api/alquileres', requireWrite, async (req, res) => {
   const { cancha, fecha, hora, cliente, telefono, monto, pagado } = req.body;
   if (!cancha || !fecha || hora === undefined) return res.status(400).json({ error: 'Faltan cancha, fecha u hora' });
 
@@ -678,7 +793,7 @@ app.post('/api/alquileres', requireAdmin, async (req, res) => {
   res.status(201).json(data);
 });
 
-app.put('/api/alquileres/:id', requireAdmin, async (req, res) => {
+app.put('/api/alquileres/:id', requireWrite, async (req, res) => {
   const allowed = ['cancha','fecha','hora','cliente','telefono','monto','pagado','estado'];
   const updates = {};
   for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
@@ -691,7 +806,7 @@ app.put('/api/alquileres/:id', requireAdmin, async (req, res) => {
   res.json(data);
 });
 
-app.delete('/api/alquileres/:id', requireAdmin, async (req, res) => {
+app.delete('/api/alquileres/:id', requireWrite, async (req, res) => {
   const { error } = await supabase.from('alquileres').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ mensaje: 'Reserva cancelada' });
@@ -707,7 +822,7 @@ app.get('/api/alquileres/fijos', async (req, res) => {
   res.json(data);
 });
 
-app.post('/api/alquileres/fijos', requireAdmin, async (req, res) => {
+app.post('/api/alquileres/fijos', requireWrite, async (req, res) => {
   const { cancha, dia_semana, hora, cliente, telefono } = req.body || {};
   if (!cancha || dia_semana === undefined || hora === undefined) {
     return res.status(400).json({ error: 'Faltan cancha, dia_semana u hora' });
@@ -719,7 +834,7 @@ app.post('/api/alquileres/fijos', requireAdmin, async (req, res) => {
   res.status(201).json(data);
 });
 
-app.delete('/api/alquileres/fijos/:id', requireAdmin, async (req, res) => {
+app.delete('/api/alquileres/fijos/:id', requireWrite, async (req, res) => {
   const { error } = await supabase.from('alquileres_fijos')
     .update({ activo: false }).eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
@@ -772,10 +887,10 @@ app.get('/api/accesos/stats', async (req, res) => {
 //  DASHBOARD
 // ═══════════════════════════════════════════════════════════
 app.get('/api/dashboard', async (req, res) => {
-  const [totalQ, alDiaQ, morososQ, ingQ, gasQ] = await Promise.all([
+  const [totalQ, alDiaQ, inhabQ, ingQ, gasQ] = await Promise.all([
     supabase.from('socios').select('*', { count: 'exact', head: true }).eq('activo', true),
     supabase.from('socios').select('*', { count: 'exact', head: true }).eq('activo', true).eq('estado_cuota', 'Al dia'),
-    supabase.from('socios').select('*', { count: 'exact', head: true }).eq('activo', true).eq('estado_cuota', 'Moroso'),
+    supabase.from('socios').select('*', { count: 'exact', head: true }).eq('activo', true).neq('estado_cuota', 'Al dia'),
     supabase.from('ingresos').select('monto'),
     supabase.from('gastos').select('monto'),
   ]);
@@ -787,7 +902,7 @@ app.get('/api/dashboard', async (req, res) => {
     socios: {
       total: totalQ.count || 0,
       al_dia: alDiaQ.count || 0,
-      morosos: morososQ.count || 0,
+      inhabilitados: inhabQ.count || 0,
     },
     finanzas: {
       ingresos: totalIng,

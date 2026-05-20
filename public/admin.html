@@ -184,7 +184,7 @@
     <div class="sub">Sistema Integral de Gestión · <span id="clock"></span></div>
   </div>
   <div style="margin-left:auto" class="row">
-    <span class="pill">👤 Administrador</span>
+    <span class="pill" id="userPill">👤 Administrador</span>
     <span class="pill" style="border-color:var(--rojo);color:var(--rojo-osc)">● En vivo</span>
     <button onclick="logoutAdmin()" style="padding:6px 12px;background:transparent;border:1px solid var(--verde-claro);border-radius:4px;color:#8aa59a;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:.5px">Salir</button>
   </div>
@@ -195,11 +195,15 @@
     <button data-page="dashboard" class="active"><span class="dot"></span> Dashboard</button>
     <button data-page="socios"><span class="dot"></span> Socios</button>
     <button data-page="cuotas"><span class="dot"></span> Cuotas y Cobranzas</button>
-    <button data-page="finanzas"><span class="dot"></span> Finanzas</button>
+    <button data-page="ingresos"><span class="dot"></span> Ingresos</button>
+    <button data-page="egresos"><span class="dot"></span> Egresos</button>
+    <button data-page="finanzas"><span class="dot"></span> Finanzas (resumen)</button>
     <button data-page="alquileres"><span class="dot"></span> Alquileres de Cancha</button>
     <button data-page="fijos"><span class="dot"></span> Turnos Fijos Recurrentes</button>
     <button data-page="accesos"><span class="dot"></span> Molinetes / Accesos</button>
+    <button data-page="comunicacion"><span class="dot"></span> Comunicación</button>
     <button data-page="ia"><span class="dot"></span> Inteligencia Artificial</button>
+    <button data-page="usuarios"><span class="dot"></span> Usuarios</button>
     <button data-page="config"><span class="dot"></span> Configuración</button>
   </nav>
 
@@ -224,12 +228,34 @@ const state = { historial: [] };
 function getAdminToken() { return localStorage.getItem('parque_admin_token') || ''; }
 function setAdminToken(t, exp) {
   if (t) { localStorage.setItem('parque_admin_token', t); localStorage.setItem('parque_admin_exp', exp || 0); }
-  else { localStorage.removeItem('parque_admin_token'); localStorage.removeItem('parque_admin_exp'); }
+  else { ['parque_admin_token','parque_admin_exp','parque_admin_rol','parque_admin_nombre'].forEach(k => localStorage.removeItem(k)); }
 }
 function isAdminLogged() {
   const t = getAdminToken();
   const exp = Number(localStorage.getItem('parque_admin_exp') || 0);
   return !!t && exp > Date.now();
+}
+
+/* ═══ Roles y permisos por sección ═══ */
+const PERMS = {
+  admin:     { ver: ['dashboard','socios','cuotas','ingresos','egresos','finanzas','alquileres','fijos','accesos','comunicacion','ia','usuarios','config'],
+               editar: ['socios','cuotas','ingresos','egresos','finanzas','alquileres','fijos','accesos','comunicacion','ia','usuarios','config'] },
+  tesoreria: { ver: ['dashboard','socios','cuotas','ingresos','egresos','finanzas','comunicacion','ia'],
+               editar: ['cuotas','ingresos','egresos','finanzas','comunicacion','ia'] },
+  recepcion: { ver: ['dashboard','socios','cuotas','alquileres','fijos','accesos','comunicacion'],
+               editar: ['socios','alquileres','fijos','accesos','comunicacion'] },
+  profe:     { ver: ['dashboard','socios','accesos'], editar: [] },
+};
+function rolActual() { return localStorage.getItem('parque_admin_rol') || 'admin'; }
+function rolLabel(r) { return ({admin:'Admin', tesoreria:'Tesorería', recepcion:'Recepción', profe:'Profe'})[r] || r; }
+function puedeVer(p) { return (PERMS[rolActual()]?.ver || []).includes(p); }
+function puedeEditar(p) { return (PERMS[rolActual()]?.editar || []).includes(p); }
+function aplicarPermisos() {
+  document.querySelectorAll('#nav button[data-page]').forEach(b => {
+    b.style.display = puedeVer(b.dataset.page) ? '' : 'none';
+  });
+  const pill = document.getElementById('userPill');
+  if (pill) pill.textContent = '👤 ' + (localStorage.getItem('parque_admin_nombre') || 'Administrador') + ' · ' + rolLabel(rolActual());
 }
 async function api(path, opts = {}) {
   try {
@@ -270,8 +296,10 @@ function mostrarLogin(msg = '') {
         <div style="color:#8aa59a;font-size:12px;letter-spacing:1px;text-transform:uppercase;margin-top:2px">Panel Administración</div>
       </div>
       <form id="loginForm" autocomplete="off">
+        <label style="color:#8aa59a;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700">Usuario</label>
+        <input type="text" id="loginUser" autofocus required autocapitalize="off" autocomplete="username" style="width:100%;margin:6px 0 12px;padding:12px 14px;background:#0f1916;border:1px solid #2a3a30;border-radius:6px;color:#fff;font-size:15px;font-family:inherit">
         <label style="color:#8aa59a;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700">Contraseña</label>
-        <input type="password" id="loginPass" autofocus required style="width:100%;margin:6px 0 14px;padding:12px 14px;background:#0f1916;border:1px solid #2a3a30;border-radius:6px;color:#fff;font-size:15px;font-family:inherit">
+        <input type="password" id="loginPass" required autocomplete="current-password" style="width:100%;margin:6px 0 14px;padding:12px 14px;background:#0f1916;border:1px solid #2a3a30;border-radius:6px;color:#fff;font-size:15px;font-family:inherit">
         <div id="loginMsg" style="color:#e0282e;font-size:12.5px;min-height:18px;margin-bottom:10px;font-weight:600">${msg}</div>
         <button type="submit" style="width:100%;padding:13px;background:#005020;color:#fff;border:0;border-radius:6px;font-weight:700;letter-spacing:.5px;cursor:pointer;font-family:inherit;font-size:14px">Ingresar</button>
       </form>
@@ -279,15 +307,16 @@ function mostrarLogin(msg = '') {
   document.body.appendChild(ov);
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const usuario = document.getElementById('loginUser').value.trim();
     const pass = document.getElementById('loginPass').value;
     const msgEl = document.getElementById('loginMsg');
     msgEl.textContent = 'Verificando…';
     msgEl.style.color = '#8aa59a';
     try {
-      const r = await fetch('/api/admin/login', {
+      const r = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pass }),
+        body: JSON.stringify({ usuario, password: pass }),
       });
       const data = await r.json();
       if (!r.ok) {
@@ -296,6 +325,8 @@ function mostrarLogin(msg = '') {
         return;
       }
       setAdminToken(data.token, data.expiresAt);
+      localStorage.setItem('parque_admin_rol', data.rol || 'admin');
+      localStorage.setItem('parque_admin_nombre', data.nombre || 'Administrador');
       ov.remove();
       if (typeof window.adminInit === 'function') window.adminInit();
     } catch (err) {
@@ -434,8 +465,8 @@ function toast(msg, type = 'ok') {
 /* Display helpers */
 function displayEstado(s) {
   if (s.activo === false) return { label: 'De Baja', cls: 'b-warn' };
-  if (s.estado_cuota === 'Moroso') return { label: 'Moroso', cls: 'b-err' };
-  return { label: 'Activo', cls: 'b-ok' };
+  if (s.estado_cuota === 'Moroso' || s.estado_cuota === 'Suspendido') return { label: 'INHABILITADO', cls: 'b-err' };
+  return { label: 'HABILITADO', cls: 'b-ok' };
 }
 function displayGenero(g) { return g === 'F' ? 'Femenino' : g === 'M' ? 'Masculino' : g === 'O' ? 'Otro' : '—'; }
 
@@ -453,6 +484,10 @@ nav.addEventListener('click', e => {
 });
 
 async function render(p) {
+  if (!puedeVer(p)) {
+    $('#main').innerHTML = '<div role="alert" style="margin-top:20px">No tenés permiso para acceder a esta sección. Contactá al administrador.</div>';
+    return;
+  }
   $('#main').innerHTML = `
     <div style="display:grid;gap:14px">
       <div class="sk" style="height:28px;width:280px"></div>
@@ -478,7 +513,7 @@ async function render(p) {
 
 pages.dashboard = async () => {
   const [dash, res] = await Promise.all([ api('/dashboard'), api('/finanzas/resumen') ]);
-  const d = dash || { socios:{total:0,al_dia:0,morosos:0}, finanzas:{ingresos:0,gastos:0,balance:0} };
+  const d = dash || { socios:{total:0,al_dia:0,inhabilitados:0}, finanzas:{ingresos:0,gastos:0,balance:0} };
   const ingPorCat = res?.ingresos_por_cat || [];
   const gasPorCat = res?.gastos_por_cat || [];
   const pct = (n, tot) => tot ? Math.round(n/tot*100) : 0;
@@ -488,7 +523,7 @@ pages.dashboard = async () => {
   <div class="grid kpis">
     <div class="card kpi"><div class="label">Socios activos</div><div class="val">${d.socios.total.toLocaleString('es-AR')}</div><div class="delta mini">Padrón actualizado</div></div>
     <div class="card kpi"><div class="label">Al día</div><div class="val" style="color:var(--verde)">${d.socios.al_dia.toLocaleString('es-AR')}</div><div class="delta mini">${pct(d.socios.al_dia, d.socios.total)}% del padrón</div></div>
-    <div class="card kpi"><div class="label">Morosos</div><div class="val" style="color:var(--rojo)">${d.socios.morosos.toLocaleString('es-AR')}</div><div class="delta mini">${pct(d.socios.morosos, d.socios.total)}% del padrón</div></div>
+    <div class="card kpi"><div class="label">Inhabilitados</div><div class="val" style="color:var(--rojo)">${d.socios.inhabilitados.toLocaleString('es-AR')}</div><div class="delta mini">${pct(d.socios.inhabilitados, d.socios.total)}% del padrón</div></div>
     <div class="card kpi"><div class="label">Ingresos</div><div class="val">${fmtM(d.finanzas.ingresos)}</div></div>
     <div class="card kpi"><div class="label">Gastos</div><div class="val" style="color:var(--rojo)">${fmtM(d.finanzas.gastos)}</div></div>
     <div class="card kpi"><div class="label">Balance</div><div class="val" style="color:${d.finanzas.balance>=0?'var(--verde)':'var(--rojo)'}">${fmtM(d.finanzas.balance)}</div></div>
@@ -498,9 +533,9 @@ pages.dashboard = async () => {
     <div class="card">
       <h3 style="margin:0 0 8px;color:var(--verde-osc)">🔔 Alertas</h3>
       <div class="grid" style="gap:8px">
-        ${d.socios.morosos > 0
-          ? `<div class="card alert-card"><b>${d.socios.morosos} socios morosos</b><div class="mini">Ir a Cuotas y Cobranzas para revisar saldos y enviar recordatorios.</div></div>`
-          : `<div class="card alert-card ok"><b>Cero morosos 🎉</b><div class="mini">Todas las cuotas al día.</div></div>`}
+        ${d.socios.inhabilitados > 0
+          ? `<div class="card alert-card"><b>${d.socios.inhabilitados} socios inhabilitados</b><div class="mini">Ir a Cuotas y Cobranzas para revisar y registrar pagos.</div></div>`
+          : `<div class="card alert-card ok"><b>Todos habilitados 🎉</b><div class="mini">Ningún socio bloqueado.</div></div>`}
         ${d.finanzas.balance >= 0
           ? `<div class="card alert-card ok"><b>Balance positivo</b><div class="mini">Superávit de ${fmtM(d.finanzas.balance)} (${pct(d.finanzas.balance, d.finanzas.ingresos)}% margen).</div></div>`
           : `<div class="card alert-card warn"><b>Balance negativo</b><div class="mini">Déficit de ${fmtM(Math.abs(d.finanzas.balance))} — revisar gastos.</div></div>`}
@@ -528,15 +563,10 @@ pages.socios = async () => `
       <label class="sr-only" for="buscaSocio">Buscar socio</label>
       <input id="buscaSocio" type="search" placeholder="Buscar por nombre, DNI o RFID…" style="min-width:260px" autocomplete="off"/>
       <select id="filtroEstado">
-        <option value="">Todos los estados</option>
-        <option value="Activo">Activo</option>
-        <option value="Moroso">Moroso</option>
-        <option value="De Baja">De Baja</option>
-      </select>
-      <select id="filtroCat">
-        <option value="">Todas las categorías</option>
-        <option>Activo</option><option>Cadete</option>
-        <option>Vitalicio</option><option>Familiar</option>
+        <option value="">Todos</option>
+        <option value="Activo">Habilitado</option>
+        <option value="Suspendido">Inhabilitado</option>
+        <option value="De Baja">Eliminados</option>
       </select>
       <select id="filtroGenero">
         <option value="">Todos los géneros</option>
@@ -547,12 +577,12 @@ pages.socios = async () => `
     </div>
     <div class="row">
       <button class="btn ghost" onclick="exportarSocios()">⬇ Exportar CSV</button>
-      <button class="btn" onclick="nuevoSocio()">＋ Nuevo socio</button>
+      ${puedeEditar('socios') ? '<button class="btn" onclick="nuevoSocio()">＋ Nuevo socio</button>' : ''}
     </div>
   </div>
   <table id="tblSocios"><thead><tr>
-    <th>Carnet</th><th>RFID</th><th>Nombre</th><th>DNI</th><th>Género</th><th>Categoría</th><th>Disciplinas</th><th>Alta</th><th>Estado</th><th>Saldo</th><th></th>
-  </tr></thead><tbody><tr class="loading-row"><td colspan="11">Cargando padrón…</td></tr></tbody></table>
+    <th>Carnet</th><th>RFID</th><th>Nombre</th><th>DNI</th><th>Género</th><th>Disciplinas</th><th>Alta</th><th>Estado</th><th>Saldo</th><th></th>
+  </tr></thead><tbody><tr class="loading-row"><td colspan="10">Cargando padrón…</td></tr></tbody></table>
 `;
 
 async function renderSocios() {
@@ -570,7 +600,7 @@ async function renderSocios() {
   const tbody = document.querySelector('#tblSocios tbody');
   if (!tbody) return;
   if (socios.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="11"><div class="empty"><b>Sin resultados</b>Probá con otro término o limpiá los filtros.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><b>Sin resultados</b>Probá con otro término o limpiá los filtros.</div></td></tr>';
     return;
   }
   tbody.innerHTML = socios.map(s => {
@@ -583,7 +613,6 @@ async function renderSocios() {
       <td>${esc(s.nombre)}</td>
       <td>${esc(s.dni)}</td>
       <td><span class="badge ${gen==='F'?'b-info':gen==='M'?'b-ok':'b-warn'}" style="min-width:24px;text-align:center">${gen}</span></td>
-      <td><span class="badge b-info">${esc(s.categoria)}</span></td>
       <td>${esc(disc)}</td>
       <td>${fmtF(s.fecha_alta)}</td>
       <td><span class="badge ${est.cls}">${est.label}</span></td>
@@ -598,7 +627,7 @@ pages.cuotas = async () => {
   const morosos = (mor?.morosos || []).slice(0, 10);
   const total = dash?.socios?.total || 0;
   const alDia = dash?.socios?.al_dia || 0;
-  const morCount = dash?.socios?.morosos || 0;
+  const morCount = dash?.socios?.inhabilitados || 0;
   const tasa = total ? (alDia / total * 100).toFixed(1) : 0;
 
   return `
@@ -606,25 +635,24 @@ pages.cuotas = async () => {
   <div class="grid kpis">
     <div class="card kpi"><div class="label">Socios activos</div><div class="val">${total}</div></div>
     <div class="card kpi"><div class="label">Al día</div><div class="val" style="color:var(--verde)">${alDia}</div></div>
-    <div class="card kpi"><div class="label">Morosos</div><div class="val" style="color:var(--rojo)">${morCount}</div></div>
+    <div class="card kpi"><div class="label">Inhabilitados</div><div class="val" style="color:var(--rojo)">${morCount}</div></div>
     <div class="card kpi"><div class="label">Tasa de cobranza</div><div class="val">${tasa}%</div><div class="bar" style="margin-top:6px"><span style="width:${tasa}%"></span></div></div>
   </div>
   <div class="grid two-col" style="margin-top:16px">
     <div class="card">
-      <h3 style="margin:0 0 10px">Socios con mora (top 10)</h3>
-      <table><thead><tr><th>Socio</th><th>Saldo</th><th>Contacto</th><th>Acción</th></tr></thead><tbody>
+      <h3 style="margin:0 0 10px">Socios inhabilitados</h3>
+      <table><thead><tr><th>Socio</th><th>Contacto</th><th>Acción</th></tr></thead><tbody>
         ${morosos.length ? morosos.map(s => `
           <tr>
             <td>${esc(s.nombre)} (${carnet(s.id)})</td>
-            <td style="color:var(--rojo)"><b>${fmtM(s.saldo)}</b></td>
             <td class="mini">${esc(s.telefono || s.email || '—')}</td>
-            <td><button class="btn ghost" onclick="enviarRecordatorio(${s.id})">📩 Recordar</button></td>
-          </tr>`).join('') : '<tr><td colspan="4" style="color:#999;padding:16px">Sin morosos 🎉</td></tr>'}
+            <td><button class="btn" onclick="registrarPago(${s.id})">💵 Pago</button> <button class="btn ghost" onclick="enviarRecordatorio(${s.id})">📩 Recordar</button></td>
+          </tr>`).join('') : '<tr><td colspan="3" style="color:#999;padding:16px">Sin inhabilitados — todos pueden entrar 🎉</td></tr>'}
       </tbody></table>
     </div>
     <div class="card">
       <h3 style="margin:0 0 10px">Operaciones</h3>
-      <div class="row"><button class="btn alt" onclick="emitirCuotas()">📅 Emitir cuotas del período</button></div>
+      ${puedeEditar('cuotas') ? '<div class="row"><button class="btn alt" onclick="emitirCuotas()">📅 Emitir cuotas del período</button></div>' : ''}
       <p class="mini" style="margin-top:12px"><b>Flujo automatizado (próximamente):</b></p>
       <ul style="margin:0;padding-left:18px;line-height:1.7">
         <li>Día 5: emisión masiva de cuotas del mes.</li>
@@ -634,6 +662,70 @@ pages.cuotas = async () => {
         <li>Día 25: lista priorizada de cobranzas por IA.</li>
       </ul>
     </div>
+  </div>`;
+};
+
+pages.ingresos = async () => {
+  const [ing, res] = await Promise.all([ api('/ingresos'), api('/finanzas/resumen') ]);
+  const ingresos = ing || [];
+  const totIng = res?.ingresos || 0;
+  const porCat = res?.ingresos_por_cat || [];
+  const maxCat = Math.max(1, ...porCat.map(c => c.total));
+  return `
+  <h2 class="page">Ingresos</h2>
+  <div class="toolbar">
+    <div class="row"><span class="mini">Total registrado:&nbsp; <b style="color:var(--verde);font-size:17px">${fmtM(totIng)}</b></span></div>
+    <div class="row">${puedeEditar('ingresos') ? '<button class="btn" onclick="nuevoIngreso()">＋ Registrar ingreso</button>' : '<span class="mini">Solo lectura</span>'}</div>
+  </div>
+  <div class="grid two-col">
+    <div class="card">
+      <h3 style="margin:0 0 10px">Ingresos por categoría</h3>
+      ${porCat.length ? porCat.map(c => `
+        <div style="margin:6px 0"><div class="row" style="justify-content:space-between"><span>${esc(c.categoria)}</span><b>${fmtM(c.total)}</b></div>
+        <div class="bar"><span style="width:${(c.total/maxCat*100).toFixed(0)}%;background:var(--verde)"></span></div></div>`).join('') : '<p class="mini">Sin ingresos todavía.</p>'}
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px">Qué registrar acá</h3>
+      <p class="mini" style="line-height:1.7">Todo lo que entra al club: cuota social, cuota deportiva, alquiler de canchas (incluido a otros clubes y escuelas), sponsors y eventos. Los pagos de cuota que cargás desde la ficha del socio aparecen automáticamente en esta lista.</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 10px">Detalle de ingresos</h3>
+    <table><thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Monto</th></tr></thead><tbody>
+      ${ingresos.length ? ingresos.map(i => `<tr><td>${fmtF(i.fecha)}</td><td>${esc(i.concepto)}</td><td><span class="badge b-info">${esc(i.categoria)}</span></td><td><b style="color:var(--verde)">${fmtM(i.monto)}</b></td></tr>`).join('') : '<tr><td colspan="4" style="color:#999;padding:16px">Sin ingresos registrados</td></tr>'}
+    </tbody></table>
+  </div>`;
+};
+
+pages.egresos = async () => {
+  const [gas, res] = await Promise.all([ api('/gastos'), api('/finanzas/resumen') ]);
+  const gastos = gas || [];
+  const totGas = res?.gastos || 0;
+  const porCat = res?.gastos_por_cat || [];
+  const maxCat = Math.max(1, ...porCat.map(c => c.total));
+  return `
+  <h2 class="page">Egresos</h2>
+  <div class="toolbar">
+    <div class="row"><span class="mini">Total registrado:&nbsp; <b style="color:var(--rojo);font-size:17px">${fmtM(totGas)}</b></span></div>
+    <div class="row">${puedeEditar('egresos') ? '<button class="btn alt" onclick="nuevoGasto()">＋ Registrar egreso</button>' : '<span class="mini">Solo lectura</span>'}</div>
+  </div>
+  <div class="grid two-col">
+    <div class="card">
+      <h3 style="margin:0 0 10px">Egresos por categoría</h3>
+      ${porCat.length ? porCat.map(c => `
+        <div style="margin:6px 0"><div class="row" style="justify-content:space-between"><span>${esc(c.categoria)}</span><b>${fmtM(c.total)}</b></div>
+        <div class="bar"><span style="width:${(c.total/maxCat*100).toFixed(0)}%;background:var(--rojo)"></span></div></div>`).join('') : '<p class="mini">Sin egresos todavía.</p>'}
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px">Qué registrar acá</h3>
+      <p class="mini" style="line-height:1.7">Todo lo que sale del club: sueldos de profes y personal, servicios (luz/agua/gas), mantenimiento de canchas, insumos deportivos, afiliaciones y arbitrajes de ligas, e impuestos.</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 10px">Detalle de egresos</h3>
+    <table><thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Monto</th></tr></thead><tbody>
+      ${gastos.length ? gastos.map(g => `<tr><td>${fmtF(g.fecha)}</td><td>${esc(g.concepto)}</td><td><span class="badge b-info">${esc(g.categoria)}</span></td><td><b style="color:var(--rojo)">${fmtM(g.monto)}</b></td></tr>`).join('') : '<tr><td colspan="4" style="color:#999;padding:16px">Sin egresos registrados</td></tr>'}
+    </tbody></table>
   </div>`;
 };
 
@@ -647,7 +739,7 @@ pages.finanzas = async () => {
   const maxCat = Math.max(1, ...gasPorCat.map(c => c.total));
 
   return `
-  <h2 class="page">Finanzas</h2>
+  <h2 class="page">Finanzas — Resumen</h2>
   <div class="grid kpis">
     <div class="card kpi"><div class="label">Ingresos</div><div class="val" style="color:var(--verde)">${fmtM(totIng)}</div></div>
     <div class="card kpi"><div class="label">Gastos</div><div class="val" style="color:var(--rojo)">${fmtM(totGas)}</div></div>
@@ -676,8 +768,8 @@ pages.finanzas = async () => {
       ${gastos.length ? gastos.slice(0,20).map(g => `<tr><td>${fmtF(g.fecha)}</td><td>${esc(g.concepto)}</td><td><span class="badge ${g.categoria==='Sueldos'?'b-warn':g.categoria==='Ligas'?'b-err':'b-info'}">${esc(g.categoria)}</span></td><td><b>${fmtM(g.monto)}</b></td></tr>`).join('') : '<tr><td colspan="4" style="color:#999">Sin gastos</td></tr>'}
     </tbody></table>
     <div class="row" style="margin-top:10px">
-      <button class="btn" onclick="nuevoGasto()">＋ Registrar gasto</button>
-      <button class="btn ghost" onclick="nuevoIngreso()">＋ Registrar ingreso</button>
+      ${puedeEditar('egresos') ? '<button class="btn" onclick="nuevoGasto()">＋ Registrar egreso</button>' : ''}
+      ${puedeEditar('ingresos') ? '<button class="btn ghost" onclick="nuevoIngreso()">＋ Registrar ingreso</button>' : ''}
     </div>
   </div>`;
 };
@@ -934,6 +1026,13 @@ pages.accesos = async () => {
   const accesos = await api('/accesos?limit=25') || [];
   return `
   <h2 class="page">Control de Accesos — Molinete</h2>
+  <div class="card" style="margin-bottom:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="flex:1;min-width:240px">
+      <h3 style="margin:0 0 4px">Pantalla del molinete</h3>
+      <p class="mini" style="margin:0">Pantalla a pantalla completa para la entrada: captura el lector RFID y muestra el carnet del socio con su foto. Abrila en la PC del molinete.</p>
+    </div>
+    <a class="btn" href="/molinete.html" target="_blank" rel="noopener" style="text-decoration:none">🖥️ Abrir pantalla del molinete ↗</a>
+  </div>
   <div class="grid two-col">
     <div class="card">
       <h3 style="margin:0 0 10px">Simulador de lectura</h3>
@@ -1138,11 +1237,11 @@ pages.config = async () => {
 window.exportarSocios = async () => {
   const data = await api('/socios');
   if (!data) return;
-  const rows = [['ID','Carnet','Nombre','DNI','RFID','Genero','Categoria','Estado','Saldo','Telefono','Email','Disciplinas','Nacimiento','Alta']];
+  const rows = [['ID','Carnet','Nombre','DNI','RFID','Genero','Estado','Saldo','Telefono','Email','Disciplinas','Nacimiento','Alta']];
   (data.socios || []).forEach(s => {
     const est = displayEstado(s);
     rows.push([
-      s.id, carnet(s.id), s.nombre, s.dni, s.rfid, s.genero || '', s.categoria, est.label, s.saldo, s.telefono || '', s.email || '',
+      s.id, carnet(s.id), s.nombre, s.dni, s.rfid, s.genero || '', est.label, s.saldo, s.telefono || '', s.email || '',
       Array.isArray(s.disciplinas) ? s.disciplinas.join(' | ') : '',
       s.fecha_nacimiento || '', s.fecha_alta || '',
     ]);
@@ -1169,7 +1268,10 @@ window.nuevoSocio = async () => {
         { value: 'M', label: 'Masculino' },
         { value: 'O', label: 'Otro' },
       ]},
-      { name: 'categoria', label: 'Categoría', type: 'select', required: true, options: ['Activo','Cadete','Vitalicio','Familiar'], default: 'Activo' },
+      { name: 'estado', label: 'Estado', type: 'select', required: true, options: [
+        { value: 'habilitado', label: 'Habilitado' },
+        { value: 'inhabilitado', label: 'Inhabilitado' },
+      ], default: 'habilitado' },
       { name: 'fecha_nacimiento', label: 'Fecha de nacimiento', type: 'date' },
       { name: 'telefono', label: 'Teléfono', placeholder: '11-XXXX-XXXX' },
       { name: 'email', label: 'Email', type: 'email' },
@@ -1177,7 +1279,9 @@ window.nuevoSocio = async () => {
     ],
     submitLabel: 'Dar de alta',
     onSubmit: async (v) => {
-      const r = await api('/socios', { method: 'POST', body: v });
+      const body = { ...v, categoria: 'Activo', estado_cuota: v.estado === 'inhabilitado' ? 'Suspendido' : 'Al dia' };
+      delete body.estado;
+      const r = await api('/socios', { method: 'POST', body });
       if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
       toast(`Socio creado: ${r.nombre}`);
       renderSocios();
@@ -1206,7 +1310,6 @@ window.verSocio = async (id) => {
     <dl class="info-grid">
       <dt>DNI</dt><dd>${esc(s.dni)}</dd>
       <dt>Género</dt><dd>${displayGenero(s.genero)}</dd>
-      <dt>Categoría</dt><dd>${esc(s.categoria)}</dd>
       <dt>Saldo</dt><dd style="color:${Number(s.saldo)<0?'var(--rojo)':'var(--verde-osc)'}">${fmtM(s.saldo)}</dd>
       <dt>Nacimiento</dt><dd>${fmtF(s.fecha_nacimiento)}${edad!=null?` <span class="mini">(${edad} años)</span>`:''}</dd>
       <dt>Alta</dt><dd>${fmtF(s.fecha_alta)}</dd>
@@ -1220,8 +1323,111 @@ window.verSocio = async (id) => {
     html,
     actions: [
       { label: 'Cerrar', variant: 'ghost' },
-      { label: '📩 Enviar recordatorio', onClick: () => { enviarRecordatorio(s.id); } },
+      ...((puedeEditar('socios') || puedeEditar('cuotas')) ? [{ label: '💵 Registrar pago', onClick: () => { registrarPago(s.id); } }] : []),
+      ...(puedeEditar('socios') ? [
+        { label: '✏️ Editar', onClick: () => { editarSocio(s.id); } },
+        { label: '📩 Enviar recordatorio', onClick: () => { enviarRecordatorio(s.id); } },
+        { label: '🗑 Eliminar', variant: 'alt', onClick: () => { eliminarSocio(s.id, s.nombre); } },
+      ] : []),
     ]
+  });
+};
+
+window.registrarPago = async (id) => {
+  const s = await api('/socios/' + id);
+  if (!s) { toast('Socio no encontrado', 'err'); return; }
+  const nombre = s.nombre;
+  const sugerido = (s.saldo && Number(s.saldo) < 0) ? Math.abs(Number(s.saldo)) : 48000;
+  formModal({
+    title: `Registrar pago · ${nombre}`,
+    fields: [
+      { name: 'tipo_cuota', label: 'Tipo de cuota', type: 'select', required: true,
+        options: ['Cuota deportiva','Cuota social'], default: 'Cuota deportiva' },
+      { name: 'monto', label: 'Monto ($)', type: 'number', required: true, step: '100', default: sugerido },
+      { name: 'metodo_pago', label: 'Método de pago', type: 'select', required: true,
+        options: ['Efectivo','Transferencia','Mercado Pago','Debito'], default: 'Efectivo' },
+      { name: 'fecha', label: 'Fecha del pago', type: 'date', default: isoDate(new Date()) },
+    ],
+    submitLabel: 'Registrar pago',
+    onSubmit: async (v) => {
+      // 1) Habilitar al socio: al dia, saldo 0
+      const r1 = await api('/socios/' + id, { method: 'PUT', body: { estado_cuota: 'Al dia', saldo: 0 } });
+      if (r1 && r1.error) { toast('Error: ' + r1.error, 'err'); return true; }
+      // 2) Registrar el ingreso en Finanzas
+      const r2 = await api('/ingresos', { method: 'POST', body: {
+        concepto: `${v.tipo_cuota} — ${nombre} (${v.metodo_pago})`,
+        monto: Number(v.monto),
+        categoria: v.tipo_cuota,
+        fecha: v.fecha,
+      }});
+      if (r2 && r2.error) { toast('Socio habilitado, pero falló el ingreso: ' + r2.error, 'err'); return false; }
+      toast(`Pago registrado: ${nombre} quedó HABILITADO`);
+      const p = nav.querySelector('button.active')?.dataset.page;
+      if (p) render(p); else renderSocios();
+      return false;
+    }
+  });
+};
+
+window.eliminarSocio = (id, nombre) => {
+  modal({
+    title: 'Eliminar socio',
+    html: `<p>¿Seguro que querés eliminar a <b>${esc(nombre)}</b>?</p>
+           <p class="mini" style="margin-top:8px">El socio deja de aparecer en el padrón y no podrá pasar el molinete. El registro se conserva (baja lógica) y podés recuperarlo filtrando por estado <b>"De Baja"</b>.</p>`,
+    actions: [
+      { label: 'Cancelar', variant: 'ghost' },
+      { label: '🗑 Eliminar', variant: 'alt', onClick: async () => {
+        const r = await api('/socios/' + id, { method: 'DELETE' });
+        if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+        toast(`Socio eliminado: ${nombre}`);
+        renderSocios();
+      }},
+    ]
+  });
+};
+
+window.editarSocio = async (id) => {
+  const s = await api('/socios/' + id);
+  if (!s) { toast('Socio no encontrado', 'err'); return; }
+  const disciplinasCatalogo = (await api('/disciplinas') || []).map(d => d.nombre);
+  formModal({
+    title: `Editar socio · ${carnet(s.id)}`,
+    wide: true,
+    initial: {
+      nombre: s.nombre, dni: s.dni, rfid: s.rfid, genero: s.genero || '',
+      estado: s.estado_cuota === 'Al dia' ? 'habilitado' : 'inhabilitado',
+      fecha_nacimiento: s.fecha_nacimiento || '', telefono: s.telefono || '',
+      email: s.email || '', disciplinas: Array.isArray(s.disciplinas) ? s.disciplinas : [],
+    },
+    fields: [
+      { name: 'nombre', label: 'Nombre completo', required: true, full: true, placeholder: 'Sin tildes' },
+      { name: 'dni', label: 'DNI (solo números)', required: true, type: 'number' },
+      { name: 'rfid', label: 'RFID (10 dígitos)', required: true },
+      { name: 'genero', label: 'Género', type: 'select', required: true, options: [
+        { value: '', label: '—' },
+        { value: 'F', label: 'Femenino' },
+        { value: 'M', label: 'Masculino' },
+        { value: 'O', label: 'Otro' },
+      ]},
+      { name: 'estado', label: 'Estado', type: 'select', required: true, options: [
+        { value: 'habilitado', label: 'Habilitado' },
+        { value: 'inhabilitado', label: 'Inhabilitado' },
+      ]},
+      { name: 'fecha_nacimiento', label: 'Fecha de nacimiento', type: 'date' },
+      { name: 'telefono', label: 'Teléfono', placeholder: '11-XXXX-XXXX' },
+      { name: 'email', label: 'Email', type: 'email' },
+      { name: 'disciplinas', label: 'Disciplinas', type: 'multi', options: disciplinasCatalogo, full: true },
+    ],
+    submitLabel: 'Guardar cambios',
+    onSubmit: async (v) => {
+      const body = { ...v, categoria: 'Activo', estado_cuota: v.estado === 'inhabilitado' ? 'Suspendido' : 'Al dia' };
+      delete body.estado;
+      const r = await api('/socios/' + id, { method: 'PUT', body });
+      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      toast(`Socio actualizado: ${r.nombre}`);
+      renderSocios();
+      return false;
+    }
   });
 };
 
@@ -1234,23 +1440,288 @@ window.enviarRecordatorio = (id) => {
   });
 };
 
+/* ═══ COMUNICACIÓN (WhatsApp / Email / Redes) ═══ */
+const PLANTILLAS_WA = {
+  recordatorio: 'Hola {nombre}! 👋 Te recordamos que tenés la cuota del Club Parque pendiente. La podés abonar en la sede o por transferencia. ¡Gracias por ser parte del Verde! 💚 CSyD Parque',
+  bienvenida: '¡Bienvenido/a al Club Social y Deportivo Parque, {nombre}! 💚❤️ Somos la cuna de cracks desde 1949. Cualquier consulta, escribinos.',
+  partido: 'Hola {nombre}! ⚽ Te esperamos para el próximo partido en el Club Parque. ¡Vamos el Verde! 💚 (Editá día y hora)',
+  cumple: '¡Feliz cumpleaños, {nombre}! 🎉🎂 De parte de toda la familia del Club Parque. 💚❤️',
+  libre: '',
+};
+const PLANTILLAS_EMAIL = {
+  recordatorio: { asunto: 'Recordatorio de cuota — Club Parque', cuerpo: 'Hola {nombre},\n\nTe recordamos que tenés la cuota mensual pendiente. Podés abonarla en la sede o por transferencia.\n\n¡Gracias por ser parte del Club Social y Deportivo Parque!\nLa cuna de cracks desde 1949.' },
+  newsletter: { asunto: 'Novedades del Club Parque 💚❤️', cuerpo: 'Hola {nombre},\n\nTe contamos las novedades del mes en el Club:\n\n- (Editá este contenido)\n\nNos vemos en la cancha.\nClub Social y Deportivo Parque' },
+  bienvenida: { asunto: '¡Bienvenido/a al Club Parque!', cuerpo: 'Hola {nombre},\n\n¡Te damos la bienvenida a la familia del Club Social y Deportivo Parque! Estamos para acompañarte.\n\nLa cuna de cracks desde 1949.' },
+};
+const IDEAS_COPY = [
+  'Por acá pasaron 4 campeones del mundo. ¿Y si el próximo sos vos? ⚽ Sumate a las inferiores del Club Parque. 💚❤️ #LaCunaDeCracks',
+  'Desde 1949 formando cracks y, sobre todo, buenas personas. Club Social y Deportivo Parque. 💚',
+  'Maradona, Paredes, Mac Allister... la historia se escribe en Marcos Sastre 3258. ¿Te la vas a perder? 🏟️',
+  'Futsal, baby fútbol, cestoball, fútbol femenino y newcom. En el Parque hay un lugar para toda la familia. 💚❤️',
+  'El Verde te espera. Asociate y viví el club como en el barrio de siempre. 📲 Escribinos por DM.',
+];
+function waPhone(tel) {
+  let d = String(tel || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.startsWith('54')) return d;
+  if (d.startsWith('9')) return '54' + d;
+  if (d.startsWith('11')) return '549' + d;
+  return '549' + d;
+}
+async function comDestinatarios(filtro) {
+  if (filtro === 'inhabilitados') { const d = await api('/cuotas/morosos'); return d?.morosos || []; }
+  const d = await api('/socios'); const socios = d?.socios || [];
+  if (filtro === 'cumple') {
+    const mes = new Date().getMonth();
+    return socios.filter(s => s.fecha_nacimiento && new Date(s.fecha_nacimiento).getMonth() === mes);
+  }
+  return socios;
+}
+
+pages.comunicacion = async () => {
+  const tab = window._comTab || 'whatsapp';
+  const tb = (id, label) => `<button class="btn ${tab===id?'':'ghost'}" onclick="comTab('${id}')">${label}</button>`;
+  const cont = tab === 'whatsapp' ? comTabWhatsApp() : tab === 'email' ? comTabEmail() : comTabRedes();
+  return `
+  <h2 class="page">Comunicación</h2>
+  <div class="row" style="margin-bottom:14px;gap:8px">${tb('whatsapp','📱 WhatsApp')} ${tb('email','✉️ Email')} ${tb('redes','📣 Redes')}</div>
+  ${cont}`;
+};
+window.comTab = (t) => { window._comTab = t; render('comunicacion'); };
+window.comCopiar = (txt) => { navigator.clipboard?.writeText(txt); toast('Copiado al portapapeles'); };
+window.comCopiarIdea = (i) => { navigator.clipboard?.writeText(IDEAS_COPY[i]); toast('Copiado'); };
+
+function comTabWhatsApp() {
+  return `
+  <div class="card">
+    <h3 style="margin:0 0 10px">Mensajes por WhatsApp</h3>
+    <p class="mini">Elegí plantilla y destinatarios. Se abre WhatsApp con el mensaje listo para enviar (clic a clic, sin costo). El <b>{nombre}</b> se reemplaza por cada socio.</p>
+    <div class="form-grid" style="margin-top:12px">
+      <label>Plantilla
+        <select id="waPlantilla" onchange="comSetPlantillaWA()">
+          <option value="recordatorio">Recordatorio de cuota</option>
+          <option value="bienvenida">Bienvenida</option>
+          <option value="partido">Aviso de partido</option>
+          <option value="cumple">Cumpleaños</option>
+          <option value="libre">Mensaje libre</option>
+        </select>
+      </label>
+      <label>Destinatarios
+        <select id="waDest">
+          <option value="inhabilitados">Inhabilitados (deben cuota)</option>
+          <option value="cumple">Cumpleañeros del mes</option>
+          <option value="todos">Todos los socios</option>
+        </select>
+      </label>
+      <label class="full">Mensaje
+        <textarea id="waMsg" rows="3" style="width:100%;padding:10px;border:1px solid var(--borde);border-radius:6px;font-family:inherit;font-size:13px">${PLANTILLAS_WA.recordatorio}</textarea>
+      </label>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn" onclick="comCargarWA()">Cargar destinatarios</button></div>
+    <div id="waLista" style="margin-top:14px"></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 8px">Envíos automáticos (WhatsApp Business API)</h3>
+    <p class="mini">Para envíos masivos automáticos (sin abrir chat por chat) se necesita la <b>WhatsApp Business API oficial de Meta</b>: número verificado, cuenta de Meta Business y plantillas aprobadas. El sistema ya segmenta y arma los mensajes; la conexión con la API queda lista para activar cuando tengas la cuenta.</p>
+  </div>`;
+}
+window.comSetPlantillaWA = () => { document.getElementById('waMsg').value = PLANTILLAS_WA[document.getElementById('waPlantilla').value] || ''; };
+window.comCargarWA = async () => {
+  const dest = document.getElementById('waDest').value;
+  const msg = document.getElementById('waMsg').value;
+  const cont = document.getElementById('waLista');
+  cont.innerHTML = '<p class="mini">Cargando…</p>';
+  const lista = await comDestinatarios(dest);
+  if (!lista.length) { cont.innerHTML = '<p class="mini">No hay destinatarios.</p>'; return; }
+  cont.innerHTML = `<p class="mini" style="margin-bottom:8px">${lista.length} destinatarios</p><table><thead><tr><th>Socio</th><th>Teléfono</th><th></th></tr></thead><tbody>` +
+    lista.map(s => {
+      const tel = waPhone(s.telefono);
+      const texto = encodeURIComponent((msg || '').replace(/{nombre}/g, (s.nombre || '').split(' ')[0]));
+      const btn = tel ? `<a class="btn" target="_blank" rel="noopener" href="https://wa.me/${tel}?text=${texto}">Enviar</a>` : '<span class="mini" style="color:#999">Sin teléfono</span>';
+      return `<tr><td>${esc(s.nombre)}</td><td class="mini">${esc(s.telefono || '—')}</td><td>${btn}</td></tr>`;
+    }).join('') + '</tbody></table>';
+};
+
+function comTabEmail() {
+  return `
+  <div class="card">
+    <h3 style="margin:0 0 10px">Email Marketing</h3>
+    <p class="mini">Armá el mensaje, cargá destinatarios y abrí tu correo con todos en CCO, o copiá la lista para tu plataforma de envíos.</p>
+    <div class="form-grid" style="margin-top:12px">
+      <label>Plantilla
+        <select id="emPlantilla" onchange="comSetPlantillaEmail()">
+          <option value="recordatorio">Recordatorio de cuota</option>
+          <option value="newsletter">Newsletter / Novedades</option>
+          <option value="bienvenida">Bienvenida</option>
+        </select>
+      </label>
+      <label>Destinatarios
+        <select id="emDest">
+          <option value="inhabilitados">Inhabilitados (deben cuota)</option>
+          <option value="cumple">Cumpleañeros del mes</option>
+          <option value="todos">Todos los socios</option>
+        </select>
+      </label>
+      <label class="full">Asunto <input id="emAsunto" value="${PLANTILLAS_EMAIL.recordatorio.asunto}"></label>
+      <label class="full">Cuerpo <textarea id="emCuerpo" rows="5" style="width:100%;padding:10px;border:1px solid var(--borde);border-radius:6px;font-family:inherit;font-size:13px">${PLANTILLAS_EMAIL.recordatorio.cuerpo}</textarea></label>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn" onclick="comCargarEmail()">Cargar destinatarios</button></div>
+    <div id="emLista" style="margin-top:14px"></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 8px">Plataforma de envíos masivos</h3>
+    <p class="mini">Para campañas con métricas (aperturas, clics, rebotes) conviene conectar un proveedor: <b>Brevo</b> (gratis hasta 300/día), <b>Resend</b> o <b>Mailchimp</b>. El sistema ya exporta la lista de correos; la integración por API queda lista para activar con una API key.</p>
+  </div>`;
+}
+window.comSetPlantillaEmail = () => {
+  const p = PLANTILLAS_EMAIL[document.getElementById('emPlantilla').value];
+  document.getElementById('emAsunto').value = p.asunto;
+  document.getElementById('emCuerpo').value = p.cuerpo;
+};
+window.comCargarEmail = async () => {
+  const dest = document.getElementById('emDest').value;
+  const asunto = document.getElementById('emAsunto').value;
+  const cuerpo = document.getElementById('emCuerpo').value;
+  const cont = document.getElementById('emLista');
+  cont.innerHTML = '<p class="mini">Cargando…</p>';
+  const lista = (await comDestinatarios(dest)).filter(s => s.email);
+  if (!lista.length) { cont.innerHTML = '<p class="mini">No hay destinatarios con email cargado.</p>'; return; }
+  const emails = lista.map(s => s.email).join(',');
+  const mailto = `mailto:?bcc=${encodeURIComponent(emails)}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+  window._emEmails = emails;
+  cont.innerHTML = `<div class="row" style="gap:8px;margin-bottom:10px">
+      <a class="btn" href="${mailto}">✉️ Abrir en mi correo (${lista.length} en CCO)</a>
+      <button class="btn ghost" onclick="comCopiar(window._emEmails)">Copiar correos</button>
+    </div><p class="mini">${lista.length} destinatarios con email.</p>`;
+};
+
+function comTabRedes() {
+  return `
+  <div class="grid two-col">
+    <div class="card">
+      <h3 style="margin:0 0 10px">Nuestras redes</h3>
+      <ul style="line-height:2.1;margin:0;padding-left:18px">
+        <li>Instagram: <a target="_blank" rel="noopener" href="https://instagram.com/club.parque">@club.parque</a></li>
+        <li>Instagram Futsal: <a target="_blank" rel="noopener" href="https://instagram.com/parque.futsal">@parque.futsal</a></li>
+        <li>Facebook: <a target="_blank" rel="noopener" href="https://facebook.com/ClubSyDParque">ClubSyDParque</a></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px">Calendario de contenido sugerido</h3>
+      <ul class="mini" style="line-height:1.9;margin:0;padding-left:18px">
+        <li><b>Lunes</b> — Historia: efemérides "cuna de cracks".</li>
+        <li><b>Miércoles</b> — Disciplinas: entrenamientos y profes.</li>
+        <li><b>Viernes</b> — Comunidad: socios, cumpleaños, convocatorias.</li>
+        <li><b>Domingo</b> — Resultados y fixture de la semana.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 10px">Ideas de copy (clic para copiar)</h3>
+    ${IDEAS_COPY.map((c, i) => `<div class="row" style="justify-content:space-between;align-items:center;border-bottom:1px solid var(--borde);padding:9px 0;gap:10px"><span class="mini" style="flex:1">${esc(c)}</span><button class="btn ghost" onclick="comCopiarIdea(${i})">Copiar</button></div>`).join('')}
+  </div>`;
+}
+
+pages.usuarios = async () => {
+  const data = await api('/usuarios');
+  window._usuarios = data?.usuarios || [];
+  const usuarios = window._usuarios;
+  return `
+  <h2 class="page">Usuarios y Permisos</h2>
+  <div class="toolbar">
+    <div class="row"><span class="mini">Usuarios con acceso al panel. Cada rol ve solo sus secciones.</span></div>
+    <div class="row"><button class="btn" onclick="nuevoUsuario()">＋ Nuevo usuario</button></div>
+  </div>
+  <table><thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody>
+    ${usuarios.length ? usuarios.map(u => `<tr>
+      <td>${esc(u.nombre)}</td>
+      <td style="font-family:ui-monospace,Menlo,monospace">${esc(u.usuario)}</td>
+      <td><span class="badge b-info">${esc(rolLabel(u.rol))}</span></td>
+      <td><span class="badge ${u.activo?'b-ok':'b-warn'}">${u.activo?'Activo':'Inactivo'}</span></td>
+      <td><button class="btn ghost" onclick="editarUsuario(${u.id})">Editar</button></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="color:#999;padding:16px">Sin usuarios todavía. Creá el primero. <b>Recordá correr la migración 009_usuarios.sql en Supabase.</b></td></tr>'}
+  </tbody></table>
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin:0 0 8px">Qué puede hacer cada rol</h3>
+    <ul class="mini" style="margin:0;padding-left:18px;line-height:1.9">
+      <li><b>Administrador</b> — acceso total, incluido usuarios y configuración.</li>
+      <li><b>Tesorería</b> — Cuotas, Ingresos, Egresos y Finanzas.</li>
+      <li><b>Recepción</b> — Socios, Molinete/Accesos y Alquileres.</li>
+      <li><b>Profesor/Entrenador</b> — solo consulta de Socios y Accesos.</li>
+    </ul>
+    <p class="mini" style="margin-top:10px;color:#888">El usuario <b>admin</b> + la clave maestra del sistema siempre puede entrar (acceso de respaldo).</p>
+  </div>`;
+};
+
+const OPCIONES_ROL = [
+  { value: 'admin', label: 'Administrador' },
+  { value: 'tesoreria', label: 'Tesorería' },
+  { value: 'recepcion', label: 'Recepción' },
+  { value: 'profe', label: 'Profesor/Entrenador' },
+];
+
+window.nuevoUsuario = () => {
+  formModal({
+    title: 'Nuevo usuario',
+    fields: [
+      { name: 'nombre', label: 'Nombre completo', required: true, full: true },
+      { name: 'usuario', label: 'Usuario (para ingresar)', required: true, placeholder: 'sin espacios, ej: rocio' },
+      { name: 'password', label: 'Contraseña', type: 'password', required: true },
+      { name: 'rol', label: 'Rol', type: 'select', required: true, options: OPCIONES_ROL, default: 'recepcion' },
+    ],
+    submitLabel: 'Crear usuario',
+    onSubmit: async (v) => {
+      const r = await api('/usuarios', { method: 'POST', body: v });
+      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      toast('Usuario creado: ' + r.nombre);
+      render('usuarios');
+      return false;
+    }
+  });
+};
+
+window.editarUsuario = (id) => {
+  const u = (window._usuarios || []).find(x => x.id === id);
+  if (!u) { toast('Usuario no encontrado', 'err'); return; }
+  formModal({
+    title: `Editar usuario · ${u.nombre}`,
+    initial: { nombre: u.nombre, rol: u.rol, activo: u.activo ? '1' : '' },
+    fields: [
+      { name: 'nombre', label: 'Nombre completo', required: true, full: true },
+      { name: 'rol', label: 'Rol', type: 'select', required: true, options: OPCIONES_ROL },
+      { name: 'activo', label: 'Activo (puede ingresar al panel)', type: 'checkbox' },
+      { name: 'password', label: 'Nueva contraseña (vacío = no cambiar)', type: 'password' },
+    ],
+    submitLabel: 'Guardar cambios',
+    onSubmit: async (v) => {
+      const body = { nombre: v.nombre, rol: v.rol, activo: !!v.activo };
+      if (v.password) body.password = v.password;
+      const r = await api('/usuarios/' + id, { method: 'PUT', body });
+      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      toast('Usuario actualizado');
+      render('usuarios');
+      return false;
+    }
+  });
+};
+
 window.nuevoGasto = () => {
   formModal({
-    title: 'Registrar gasto',
+    title: 'Registrar egreso',
     fields: [
       { name: 'concepto', label: 'Concepto', required: true, full: true },
       { name: 'monto', label: 'Monto', type: 'number', required: true, step: '100' },
       { name: 'categoria', label: 'Categoría', type: 'select', required: true,
-        options: ['Sueldos','Servicios','Ligas','Mantenimiento','Insumos','Impuestos','Otro'], default: 'Servicios' },
+        options: ['Sueldos','Servicios','Mantenimiento','Insumos deportivos','Afiliaciones/Ligas','Impuestos','Otro'], default: 'Servicios' },
       { name: 'fecha', label: 'Fecha', type: 'date', default: isoDate(new Date()), full: true },
     ],
-    submitLabel: 'Registrar',
+    submitLabel: 'Registrar egreso',
     onSubmit: async (v) => {
       v.monto = Number(v.monto);
       const r = await api('/gastos', { method: 'POST', body: v });
       if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
-      toast('Gasto registrado');
-      render('finanzas');
+      toast('Egreso registrado');
+      render('egresos');
       return false;
     }
   });
@@ -1263,7 +1734,7 @@ window.nuevoIngreso = () => {
       { name: 'concepto', label: 'Concepto', required: true, full: true },
       { name: 'monto', label: 'Monto', type: 'number', required: true, step: '100' },
       { name: 'categoria', label: 'Categoría', type: 'select', required: true,
-        options: ['Cuotas','Alquileres','Cantina','Escuelas','Sponsors','Otro'], default: 'Cuotas' },
+        options: ['Cuota social','Cuota deportiva','Alquiler de canchas','Alquiler a clubes/escuelas','Sponsors/Publicidad','Eventos/Salon','Otro'], default: 'Cuota deportiva' },
       { name: 'fecha', label: 'Fecha', type: 'date', default: isoDate(new Date()), full: true },
     ],
     submitLabel: 'Registrar',
@@ -1272,7 +1743,7 @@ window.nuevoIngreso = () => {
       const r = await api('/ingresos', { method: 'POST', body: v });
       if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
       toast('Ingreso registrado');
-      render('finanzas');
+      render('ingresos');
       return false;
     }
   });
@@ -1328,7 +1799,11 @@ function debounce(fn, ms) {
 setInterval(() => { const el = document.getElementById('clock'); if (el) el.textContent = new Date().toLocaleString('es-AR'); }, 1000);
 
 /* Init — con login gate */
-window.adminInit = function () { render('dashboard'); };
+window.adminInit = function () {
+  aplicarPermisos();
+  const inicio = puedeVer('dashboard') ? 'dashboard' : (PERMS[rolActual()]?.ver?.[0] || 'dashboard');
+  render(inicio);
+};
 if (isAdminLogged()) {
   window.adminInit();
 } else {

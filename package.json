@@ -14,5 +14,8 @@
     "dotenv": "^16.6.1",
     "express": "^4.21.0",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "serialport": "^13.0.0"
   }
 }
