@@ -490,12 +490,35 @@ app.post('/api/socios/:id/pagar', requireWrite, async (req, res) => {
   const { monto, metodo_pago, categoria, concepto } = req.body || {};
   const id = req.params.id;
   const hoy = new Date().toISOString().split('T')[0];
-  await supabase.from('cuotas').update({ estado: 'pagada', fecha_pago: hoy, metodo_pago: metodo_pago || 'efectivo' })
-    .eq('socio_id', id).neq('estado', 'pagada');
-  await supabase.from('socios').update({ estado_cuota: 'Al dia', saldo: 0 }).eq('id', id);
+  let restante = Number(monto) || 0;
+
+  // Cuotas impagas, de la más vieja a la más nueva
+  const { data: impagas } = await supabase.from('cuotas')
+    .select('*').eq('socio_id', id).neq('estado', 'pagada').order('periodo', { ascending: true });
+
+  // Aplicar el monto pagado cuota por cuota (no marca de más)
+  for (const c of (impagas || [])) {
+    if (restante <= 0) break;
+    const falta = Number(c.monto) - Number(c.pagado || 0);
+    if (falta <= 0) continue;
+    const aplica = Math.min(restante, falta);
+    const nuevoPagado = Number(c.pagado || 0) + aplica;
+    const pagada = nuevoPagado >= Number(c.monto);
+    await supabase.from('cuotas').update({
+      pagado: nuevoPagado,
+      estado: pagada ? 'pagada' : 'pendiente',
+      ...(pagada ? { fecha_pago: hoy, metodo_pago: metodo_pago || 'efectivo' } : {}),
+    }).eq('id', c.id);
+    restante -= aplica;
+  }
+
+  // Registrar el ingreso por lo efectivamente pagado
   if (monto && Number(monto) > 0) {
     await supabase.from('ingresos').insert({ concepto: concepto || 'Cuota', monto: Number(monto), categoria: categoria || 'Cuota deportiva', fecha: hoy });
   }
+
+  // Recalcular estado/saldo según lo que queda impago
+  await recalcularMorosidad();
   res.json({ mensaje: 'Pago registrado' });
 });
 
