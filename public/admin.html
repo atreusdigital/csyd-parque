@@ -31,6 +31,12 @@
   nav.side button:hover{background:var(--verde-claro)}
   nav.side button.active{background:var(--verde);color:#fff;font-weight:600}
   nav.side .dot{width:8px;height:8px;border-radius:50%;background:var(--rojo);display:inline-block}
+  nav.side .nav-group-head{font-weight:600}
+  nav.side .nav-group-head .chev{margin-left:auto;font-size:11px;color:#999;transition:transform .15s}
+  nav.side .nav-group.open .nav-group-head .chev{transform:rotate(90deg)}
+  nav.side .nav-group-items{display:none;flex-direction:column;gap:3px;padding-left:18px;margin:2px 0}
+  nav.side .nav-group.open .nav-group-items{display:flex}
+  nav.side .nav-group-items button{font-size:13px;padding:8px 10px}
   main{padding:22px 26px;overflow:auto}
   h2.page{margin:0 0 14px;font-size:22px;color:var(--verde-osc);border-bottom:3px solid var(--rojo);padding-bottom:6px;display:inline-block}
   .grid{display:grid;gap:14px}
@@ -184,28 +190,14 @@
     <div class="sub">Sistema Integral de Gestión · <span id="clock"></span></div>
   </div>
   <div style="margin-left:auto" class="row">
-    <span class="pill" id="userPill">👤 Administrador</span>
+    <span class="pill" id="userPill" style="color:var(--verde-osc);font-weight:600">👤 Administrador</span>
     <span class="pill" style="border-color:var(--rojo);color:var(--rojo-osc)">● En vivo</span>
     <button onclick="logoutAdmin()" style="padding:6px 12px;background:transparent;border:1px solid var(--verde-claro);border-radius:4px;color:#8aa59a;cursor:pointer;font-family:inherit;font-size:11px;letter-spacing:.5px">Salir</button>
   </div>
 </header>
 
 <div class="shell">
-  <nav class="side" id="nav">
-    <button data-page="dashboard" class="active"><span class="dot"></span> Dashboard</button>
-    <button data-page="socios"><span class="dot"></span> Socios</button>
-    <button data-page="cuotas"><span class="dot"></span> Cuotas y Cobranzas</button>
-    <button data-page="ingresos"><span class="dot"></span> Ingresos</button>
-    <button data-page="egresos"><span class="dot"></span> Egresos</button>
-    <button data-page="finanzas"><span class="dot"></span> Finanzas (resumen)</button>
-    <button data-page="alquileres"><span class="dot"></span> Alquileres de Cancha</button>
-    <button data-page="fijos"><span class="dot"></span> Turnos Fijos Recurrentes</button>
-    <button data-page="accesos"><span class="dot"></span> Molinetes / Accesos</button>
-    <button data-page="comunicacion"><span class="dot"></span> Comunicación</button>
-    <button data-page="ia"><span class="dot"></span> Inteligencia Artificial</button>
-    <button data-page="usuarios"><span class="dot"></span> Usuarios</button>
-    <button data-page="config"><span class="dot"></span> Configuración</button>
-  </nav>
+  <nav class="side" id="nav"></nav>
 
   <main id="main"></main>
 </div>
@@ -251,9 +243,7 @@ function rolLabel(r) { return ({admin:'Admin', tesoreria:'Tesorería', recepcion
 function puedeVer(p) { return (PERMS[rolActual()]?.ver || []).includes(p); }
 function puedeEditar(p) { return (PERMS[rolActual()]?.editar || []).includes(p); }
 function aplicarPermisos() {
-  document.querySelectorAll('#nav button[data-page]').forEach(b => {
-    b.style.display = puedeVer(b.dataset.page) ? '' : 'none';
-  });
+  if (typeof renderMenu === 'function') renderMenu();
   const pill = document.getElementById('userPill');
   if (pill) pill.textContent = '👤 ' + (localStorage.getItem('parque_admin_nombre') || 'Administrador') + ' · ' + rolLabel(rolActual());
 }
@@ -469,6 +459,18 @@ function displayEstado(s) {
   return { label: 'HABILITADO', cls: 'b-ok' };
 }
 function displayGenero(g) { return g === 'F' ? 'Femenino' : g === 'M' ? 'Masculino' : g === 'O' ? 'Otro' : '—'; }
+function cuotaMensual(s) {
+  const social = window._cuotaSocial ?? 1000;
+  const precios = window._precios || {};
+  const ds = Array.isArray(s.disciplinas) ? s.disciplinas : [];
+  return social + ds.reduce((a, d) => a + (precios[d] || 0), 0);
+}
+async function cargarPrecios() {
+  if (window._precios) return;
+  const [discs, cfg] = await Promise.all([ api('/disciplinas'), api('/config') ]);
+  window._precios = {}; (discs || []).forEach(d => { window._precios[d.nombre] = Number(d.precio) || 48000; });
+  window._cuotaSocial = Number(cfg?.cuota_social ?? 1000);
+}
 
 /* =========================================================
    ROUTER
@@ -476,11 +478,53 @@ function displayGenero(g) { return g === 'F' ? 'Femenino' : g === 'M' ? 'Masculi
 const pages = {};
 const $ = s => document.querySelector(s);
 const nav = $('#nav');
+
+const MENU = [
+  { page: 'dashboard', label: 'Dashboard' },
+  { group: 'g-socios', label: 'Socios', items: [
+    { page: 'socios', label: 'Padrón de Socios' },
+    { page: 'cuotas', label: 'Cuotas y Cobranzas' },
+  ]},
+  { group: 'g-admin', label: 'Administración', items: [
+    { page: 'ingresos', label: 'Ingresos' },
+    { page: 'egresos', label: 'Egresos' },
+    { page: 'finanzas', label: 'Finanzas (resumen)' },
+  ]},
+  { group: 'g-alquileres', label: 'Alquileres', items: [
+    { page: 'alquileres', label: 'Alquileres de Cancha' },
+    { page: 'fijos', label: 'Turnos Fijos Recurrentes' },
+  ]},
+  { page: 'comunicacion', label: 'Redes Sociales' },
+  { page: 'ia', label: 'Inteligencia Artificial' },
+  { group: 'g-config', label: 'Configuración', items: [
+    { page: 'accesos', label: 'Molinetes / Accesos' },
+    { page: 'usuarios', label: 'Usuarios' },
+    { page: 'config', label: 'Configuración' },
+  ]},
+];
+function grupoDe(page) {
+  for (const m of MENU) if (m.items && m.items.some(i => i.page === page)) return m.group;
+  return null;
+}
+function renderMenu() {
+  nav.innerHTML = MENU.map(m => {
+    if (m.page) {
+      if (!puedeVer(m.page)) return '';
+      return `<button class="nav-item" data-page="${m.page}"><span class="dot"></span> ${m.label}</button>`;
+    }
+    const items = m.items.filter(i => puedeVer(i.page));
+    if (!items.length) return '';
+    return `<div class="nav-group" data-group="${m.group}">
+      <button class="nav-group-head"><span class="dot"></span> ${m.label}<span class="chev">▸</span></button>
+      <div class="nav-group-items">${items.map(i => `<button class="nav-item" data-page="${i.page}">${i.label}</button>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
 nav.addEventListener('click', e => {
-  const b = e.target.closest('button[data-page]'); if (!b) return;
-  [...nav.querySelectorAll('button')].forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  render(b.dataset.page);
+  const head = e.target.closest('.nav-group-head');
+  if (head) { head.closest('.nav-group')?.classList.toggle('open'); return; }
+  const b = e.target.closest('button[data-page]');
+  if (b) render(b.dataset.page);
 });
 
 async function render(p) {
@@ -488,6 +532,9 @@ async function render(p) {
     $('#main').innerHTML = '<div role="alert" style="margin-top:20px">No tenés permiso para acceder a esta sección. Contactá al administrador.</div>';
     return;
   }
+  nav.querySelectorAll('.nav-item').forEach(x => x.classList.toggle('active', x.dataset.page === p));
+  const _g = grupoDe(p);
+  if (_g) nav.querySelectorAll('.nav-group').forEach(gr => { if (gr.dataset.group === _g) gr.classList.add('open'); });
   $('#main').innerHTML = `
     <div style="display:grid;gap:14px">
       <div class="sk" style="height:28px;width:280px"></div>
@@ -581,26 +628,25 @@ pages.socios = async () => `
     </div>
   </div>
   <table id="tblSocios"><thead><tr>
-    <th>Carnet</th><th>RFID</th><th>Nombre</th><th>DNI</th><th>Género</th><th>Disciplinas</th><th>Alta</th><th>Estado</th><th>Saldo</th><th></th>
-  </tr></thead><tbody><tr class="loading-row"><td colspan="10">Cargando padrón…</td></tr></tbody></table>
+    <th>Carnet</th><th>RFID</th><th>Nombre</th><th>DNI</th><th>Género</th><th>Disciplinas</th><th>Alta</th><th>Estado</th><th>Cuota/mes</th><th>Saldo</th><th></th>
+  </tr></thead><tbody><tr class="loading-row"><td colspan="11">Cargando padrón…</td></tr></tbody></table>
 `;
 
 async function renderSocios() {
+  await cargarPrecios();
   const q  = document.getElementById('buscaSocio')?.value.trim() || '';
   const fe = document.getElementById('filtroEstado')?.value || '';
-  const fc = document.getElementById('filtroCat')?.value || '';
   const fg = document.getElementById('filtroGenero')?.value || '';
   const params = new URLSearchParams();
   if (q)  params.set('buscar', q);
   if (fe) params.set('estado', fe);
-  if (fc) params.set('categoria', fc);
   if (fg) params.set('genero', fg);
   const data = await api('/socios?' + params);
   const socios = data?.socios || [];
   const tbody = document.querySelector('#tblSocios tbody');
   if (!tbody) return;
   if (socios.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10"><div class="empty"><b>Sin resultados</b>Probá con otro término o limpiá los filtros.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11"><div class="empty"><b>Sin resultados</b>Probá con otro término o limpiá los filtros.</div></td></tr>';
     return;
   }
   tbody.innerHTML = socios.map(s => {
@@ -616,6 +662,7 @@ async function renderSocios() {
       <td>${esc(disc)}</td>
       <td>${fmtF(s.fecha_alta)}</td>
       <td><span class="badge ${est.cls}">${est.label}</span></td>
+      <td><b style="color:var(--verde-osc)">${fmtM(cuotaMensual(s))}</b></td>
       <td style="color:${Number(s.saldo)<0?'var(--rojo)':'#333'}"><b>${fmtM(s.saldo)}</b></td>
       <td><button class="btn ghost" onclick="verSocio(${s.id})">Ver</button></td>
     </tr>`;
@@ -968,7 +1015,7 @@ function reservarTurno(cancha, fecha, hora) {
       v.cancha = cancha; v.fecha = fecha; v.hora = hora;
       v.monto = Number(v.monto) || 0;
       const r = await api('/alquileres', { method: 'POST', body: v });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
       toast('Turno reservado');
       renderAlquilerGrid();
       return false;
@@ -1001,7 +1048,7 @@ async function verTurno(id) {
         label: turno.pagado ? 'Marcar como impago' : 'Marcar como pagado',
         onClick: async () => {
           const r = await api('/alquileres/' + id, { method: 'PUT', body: { pagado: !turno.pagado } });
-          if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+          if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
           toast(!turno.pagado ? 'Marcado como pagado' : 'Marcado como impago');
           renderAlquilerGrid();
           return false;
@@ -1100,7 +1147,7 @@ async function simularAcceso() {
   }
   const cls = res.resultado === 'OK' ? 'ok' : 'no';
   const icon = res.resultado === 'OK' ? '✔' : '✘';
-  const socioL = res.socio ? `<div>${esc(res.socio.nombre)} (${esc(res.socio.categoria)})</div>` : '';
+  const socioL = res.socio ? `<div>${esc(res.socio.nombre)}${Array.isArray(res.socio.disciplinas) && res.socio.disciplinas.length ? ' — ' + esc(res.socio.disciplinas.join(', ')) : ''}</div>` : '';
   t.innerHTML = `<div>[ MOLINETE PRINCIPAL · Puerta 1 ]</div>
     <div>[${stamp}] RFID: ${esc(rfid)}</div>
     ${socioL}
@@ -1195,7 +1242,7 @@ async function enviarChat() {
 }
 
 pages.config = async () => {
-  const [canchas, disciplinas, health] = await Promise.all([ api('/canchas'), api('/disciplinas'), api('/health') ]);
+  const [canchas, disciplinas, health, cfg] = await Promise.all([ api('/canchas'), api('/disciplinas'), api('/health'), api('/config') ]);
   return `
   <h2 class="page">Configuración del Club</h2>
   <div class="grid two-col">
@@ -1212,10 +1259,22 @@ pages.config = async () => {
       </tbody></table>
     </div>
     <div class="card">
-      <h3 style="margin:0 0 10px">Disciplinas</h3>
-      <ul style="margin:0;padding-left:18px;line-height:1.7">
-        ${(disciplinas||[]).map(d => `<li>${esc(d.nombre)}</li>`).join('') || '<li>Sin disciplinas</li>'}
-      </ul>
+      <h3 style="margin:0 0 10px">Cuotas y precios</h3>
+      <label style="display:block;margin-bottom:6px">Cuota social <span class="mini">(la pagan todos los socios)</span>
+        <div class="row" style="gap:8px;margin-top:4px">
+          <input id="cfgCuotaSocial" type="number" step="100" value="${cfg?.cuota_social ?? 1000}" style="width:140px" ${puedeEditar('config')?'':'disabled'}>
+          ${puedeEditar('config') ? '<button class="btn" onclick="guardarCuotaSocial()">Guardar</button>' : ''}
+        </div>
+      </label>
+      <h4 class="mini" style="margin:14px 0 4px">CUOTA DEPORTIVA POR DISCIPLINA</h4>
+      <table><thead><tr><th>Disciplina</th><th>Precio mensual</th>${puedeEditar('config')?'<th></th>':''}</tr></thead><tbody>
+        ${(disciplinas||[]).map(d => `<tr>
+          <td>${esc(d.nombre)}</td>
+          <td><input type="number" step="100" id="prec-${d.id}" value="${d.precio ?? 48000}" style="width:120px" ${puedeEditar('config')?'':'disabled'}></td>
+          ${puedeEditar('config') ? `<td><button class="btn ghost" onclick="guardarPrecioDisc(${d.id})">Guardar</button></td>` : ''}
+        </tr>`).join('') || '<tr><td colspan="3">Sin disciplinas</td></tr>'}
+      </tbody></table>
+      <p class="mini" style="margin-top:8px">Cada socio paga: <b>cuota social + suma de las disciplinas que hace</b>.</p>
     </div>
     <div class="card">
       <h3 style="margin:0 0 10px">Integraciones</h3>
@@ -1282,7 +1341,7 @@ window.nuevoSocio = async () => {
       const body = { ...v, categoria: 'Activo', estado_cuota: v.estado === 'inhabilitado' ? 'Suspendido' : 'Al dia' };
       delete body.estado;
       const r = await api('/socios', { method: 'POST', body });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
       toast(`Socio creado: ${r.nombre}`);
       renderSocios();
       return false;
@@ -1293,6 +1352,7 @@ window.nuevoSocio = async () => {
 window.verSocio = async (id) => {
   const s = await api('/socios/' + id);
   if (!s) { toast('Socio no encontrado', 'err'); return; }
+  await cargarPrecios();
   const disc = Array.isArray(s.disciplinas) && s.disciplinas.length ? s.disciplinas.join(', ') : '—';
   const est = displayEstado(s);
   const hoy = new Date();
@@ -1310,6 +1370,7 @@ window.verSocio = async (id) => {
     <dl class="info-grid">
       <dt>DNI</dt><dd>${esc(s.dni)}</dd>
       <dt>Género</dt><dd>${displayGenero(s.genero)}</dd>
+      <dt>Cuota mensual</dt><dd><b style="color:var(--verde-osc)">${fmtM(cuotaMensual(s))}</b> <span class="mini">(social + disciplinas)</span></dd>
       <dt>Saldo</dt><dd style="color:${Number(s.saldo)<0?'var(--rojo)':'var(--verde-osc)'}">${fmtM(s.saldo)}</dd>
       <dt>Nacimiento</dt><dd>${fmtF(s.fecha_nacimiento)}${edad!=null?` <span class="mini">(${edad} años)</span>`:''}</dd>
       <dt>Alta</dt><dd>${fmtF(s.fecha_alta)}</dd>
@@ -1352,7 +1413,7 @@ window.registrarPago = async (id) => {
     onSubmit: async (v) => {
       // 1) Habilitar al socio: al dia, saldo 0
       const r1 = await api('/socios/' + id, { method: 'PUT', body: { estado_cuota: 'Al dia', saldo: 0 } });
-      if (r1 && r1.error) { toast('Error: ' + r1.error, 'err'); return true; }
+      if (!r1 || r1.error) { toast('Error: ' + ((r1 && r1.error) || 'no se pudo guardar'), 'err'); return true; }
       // 2) Registrar el ingreso en Finanzas
       const r2 = await api('/ingresos', { method: 'POST', body: {
         concepto: `${v.tipo_cuota} — ${nombre} (${v.metodo_pago})`,
@@ -1378,7 +1439,7 @@ window.eliminarSocio = (id, nombre) => {
       { label: 'Cancelar', variant: 'ghost' },
       { label: '🗑 Eliminar', variant: 'alt', onClick: async () => {
         const r = await api('/socios/' + id, { method: 'DELETE' });
-        if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+        if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
         toast(`Socio eliminado: ${nombre}`);
         renderSocios();
       }},
@@ -1423,7 +1484,7 @@ window.editarSocio = async (id) => {
       const body = { ...v, categoria: 'Activo', estado_cuota: v.estado === 'inhabilitado' ? 'Suspendido' : 'Al dia' };
       delete body.estado;
       const r = await api('/socios/' + id, { method: 'PUT', body });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
       toast(`Socio actualizado: ${r.nombre}`);
       renderSocios();
       return false;
@@ -1483,7 +1544,7 @@ pages.comunicacion = async () => {
   const tb = (id, label) => `<button class="btn ${tab===id?'':'ghost'}" onclick="comTab('${id}')">${label}</button>`;
   const cont = tab === 'whatsapp' ? comTabWhatsApp() : tab === 'email' ? comTabEmail() : comTabRedes();
   return `
-  <h2 class="page">Comunicación</h2>
+  <h2 class="page">Redes Sociales y Comunicación</h2>
   <div class="row" style="margin-bottom:14px;gap:8px">${tb('whatsapp','📱 WhatsApp')} ${tb('email','✉️ Email')} ${tb('redes','📣 Redes')}</div>
   ${cont}`;
 };
@@ -1672,7 +1733,7 @@ window.nuevoUsuario = () => {
     submitLabel: 'Crear usuario',
     onSubmit: async (v) => {
       const r = await api('/usuarios', { method: 'POST', body: v });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
       toast('Usuario creado: ' + r.nombre);
       render('usuarios');
       return false;
@@ -1697,7 +1758,7 @@ window.editarUsuario = (id) => {
       const body = { nombre: v.nombre, rol: v.rol, activo: !!v.activo };
       if (v.password) body.password = v.password;
       const r = await api('/usuarios/' + id, { method: 'PUT', body });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
       toast('Usuario actualizado');
       render('usuarios');
       return false;
@@ -1719,7 +1780,7 @@ window.nuevoGasto = () => {
     onSubmit: async (v) => {
       v.monto = Number(v.monto);
       const r = await api('/gastos', { method: 'POST', body: v });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
       toast('Egreso registrado');
       render('egresos');
       return false;
@@ -1741,7 +1802,7 @@ window.nuevoIngreso = () => {
     onSubmit: async (v) => {
       v.monto = Number(v.monto);
       const r = await api('/ingresos', { method: 'POST', body: v });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
+      if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar, probá de nuevo'), 'err'); return true; }
       toast('Ingreso registrado');
       render('ingresos');
       return false;
@@ -1749,28 +1810,54 @@ window.nuevoIngreso = () => {
   });
 };
 
-window.emitirCuotas = () => {
-  formModal({
+window.emitirCuotas = async () => {
+  const [discs, cfg] = await Promise.all([ api('/disciplinas'), api('/config') ]);
+  const social = Number(cfg?.cuota_social ?? 1000);
+  const periodoDefault = new Date().toISOString().slice(0, 7);
+  const html = `
+    <p class="mini">Se emite una cuota a cada socio activo, calculada según las disciplinas que hace:</p>
+    <div class="card" style="background:var(--verde-claro);margin:10px 0">
+      <div class="row" style="justify-content:space-between"><span>Cuota social (todos)</span><b>$${social.toLocaleString('es-AR')}</b></div>
+      ${(discs || []).map(d => `<div class="row" style="justify-content:space-between"><span>${esc(d.nombre)}</span><b>$${Number(d.precio ?? 48000).toLocaleString('es-AR')}</b></div>`).join('')}
+      <p class="mini" style="margin:8px 0 0">Estos valores se editan en Configuración.</p>
+    </div>
+    <div class="form-grid">
+      <label>Período (YYYY-MM)<input id="emiPeriodo" value="${periodoDefault}"></label>
+      <label>Fecha de vencimiento<input id="emiVenc" type="date"></label>
+    </div>`;
+  modal({
     title: 'Emitir cuotas del período',
-    fields: [
-      { name: 'periodo', label: 'Período (YYYY-MM)', required: true, default: new Date().toISOString().slice(0,7), placeholder: '2026-04' },
-      { name: 'fecha_venc', label: 'Fecha vencimiento', type: 'date' },
-      { name: 'monto_activo', label: 'Cuota Activo', type: 'number', default: 18000, step: '100' },
-      { name: 'monto_cadete', label: 'Cuota Cadete', type: 'number', default: 12000, step: '100' },
-      { name: 'monto_familiar', label: 'Cuota Familiar', type: 'number', default: 52000, step: '100' },
-    ],
-    submitLabel: 'Emitir',
-    onSubmit: async (v) => {
-      v.monto_activo = Number(v.monto_activo);
-      v.monto_cadete = Number(v.monto_cadete);
-      v.monto_familiar = Number(v.monto_familiar);
-      const r = await api('/cuotas/emitir', { method: 'POST', body: v });
-      if (r && r.error) { toast('Error: ' + r.error, 'err'); return true; }
-      toast(r.mensaje || 'Cuotas emitidas');
-      render('cuotas');
-      return false;
-    }
+    html,
+    actions: [
+      { label: 'Cancelar', variant: 'ghost' },
+      { label: 'Emitir', onClick: async () => {
+        const periodo = (document.getElementById('emiPeriodo').value || '').trim();
+        const fecha_venc = document.getElementById('emiVenc').value || undefined;
+        if (!periodo) { toast('Ingresá el período (YYYY-MM)', 'err'); return true; }
+        const r = await api('/cuotas/emitir', { method: 'POST', body: { periodo, fecha_venc } });
+        if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo emitir'), 'err'); return true; }
+        toast(r.mensaje || 'Cuotas emitidas');
+        render('cuotas');
+      }},
+    ]
   });
+};
+
+window.guardarCuotaSocial = async () => {
+  const v = Number(document.getElementById('cfgCuotaSocial').value);
+  if (isNaN(v)) { toast('Monto inválido', 'err'); return; }
+  const r = await api('/config', { method: 'PUT', body: { cuota_social: v } });
+  if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar'), 'err'); return; }
+  window._cuotaSocial = v;
+  toast('Cuota social actualizada');
+};
+window.guardarPrecioDisc = async (id) => {
+  const v = Number(document.getElementById('prec-' + id).value);
+  if (isNaN(v)) { toast('Monto inválido', 'err'); return; }
+  const r = await api('/disciplinas/' + id, { method: 'PUT', body: { precio: v } });
+  if (!r || r.error) { toast('Error: ' + ((r && r.error) || 'no se pudo guardar'), 'err'); return; }
+  window._precios = null; // invalidar cache de precios del padrón
+  toast('Precio actualizado');
 };
 
 /* =========================================================
@@ -1779,7 +1866,7 @@ window.emitirCuotas = () => {
 function afterRender(p) {
   if (p === 'socios') {
     renderSocios();
-    ['buscaSocio','filtroEstado','filtroCat','filtroGenero'].forEach(id => {
+    ['buscaSocio','filtroEstado','filtroGenero'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', debounce(renderSocios, 250));
     });

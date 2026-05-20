@@ -8,9 +8,11 @@ Incluye: padrón de socios, cuotas y cobranzas, finanzas (ingresos/gastos), alqu
 
 ## Stack
 
-- **Backend:** Node.js + Express + sql.js (SQLite puro en JavaScript)
-- **Frontend:** HTML/CSS/JS single-file (public/index.html), sin frameworks
-- **Base de datos:** SQLite (archivo csyd_parque.db, se crea automáticamente)
+- **Backend:** Node.js + Express + Supabase (Postgres) vía `@supabase/supabase-js` (service_role)
+- **Frontend:** HTML/CSS/JS single-file, sin frameworks — `public/index.html` (landing) y `public/admin.html` (panel)
+- **Base de datos:** Supabase Postgres (proyecto `jbbhunvlpvusasnalxsq`). Migraciones SQL en `supabase/migrations/`, se corren a mano en el SQL Editor.
+- **Deploy:** Vercel (`vercel --prod`). Pantalla de molinete en `public/molinete.html`.
+- **Auth:** login por usuario+contraseña (scrypt) con roles (admin/tesoreria/recepcion/profe) + admin maestro de respaldo (`ADMIN_PASSWORD`).
 
 ## Estructura de archivos
 
@@ -97,13 +99,28 @@ Cuando trabajes en este proyecto:
 - Todos los endpoints deben devolver JSON
 - El campo RFID siempre es de 10 dígitos (formato EM4100)
 
+## Estado actual (mayo 2026)
+
+- [x] Migración a Supabase Postgres + deploy en Vercel
+- [x] Padrón de socios con estado único **HABILITADO/INHABILITADO** (sin categorías; `estado_cuota` Al dia/Suspendido)
+- [x] Cuotas: **cuota social + cuota deportiva por disciplina**; el monto de cada socio se calcula cruzando sus disciplinas (configurable en Configuración)
+- [x] Pago simple (regulariza socio + registra ingreso), emisión de cuotas por período
+- [x] Ingresos y Egresos separados con categorías propias del club
+- [x] Alquileres con grilla + MercadoPago + turnos fijos
+- [x] Control de acceso por molinete RFID (pantalla `molinete.html`)
+- [x] Módulo de Comunicación (WhatsApp wa.me, Email, Redes) con segmentación
+- [x] Usuarios con roles y permisos por sección
+- [x] Menú agrupado (Socios / Administración / Alquileres / Configuración)
+
 ## Próximos pasos pendientes
 
-- [ ] Integración con Mercado Pago para cobro de cuotas online
-- [ ] Bot de WhatsApp Business para recordatorios automáticos
+- [ ] WhatsApp Business API oficial (envíos masivos automáticos; hoy es wa.me clic-a-clic)
+- [ ] Email marketing con proveedor (Brevo/Resend) y métricas
+- [ ] Carnet digital con QR + portal del socio
+- [ ] Automatizar cobranza (recordatorio + link de pago MP + débito automático)
 - [ ] Facturación electrónica AFIP (factura C / A)
-- [ ] App móvil para socios (carnet digital + reserva canchas)
 - [ ] Reconocimiento facial opcional en molinetes
 - [ ] Módulo de IA: predicción de morosidad, optimización de turnos, detección de anomalías
-- [ ] Autenticación y roles (admin, tesorería, recepción, profesor, socio)
 - [ ] Tests automatizados
+
+> Roadmap detallado en `docs/roadmap-funcionalidades.md`.

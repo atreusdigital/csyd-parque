@@ -108,10 +108,12 @@ function requireRole(...roles) {
     const hdr = req.headers.authorization || '';
     const payload = verifyToken(hdr.replace(/^Bearer\s+/i, '').trim());
     if (!payload) return res.status(401).json({ error: 'No autorizado' });
-    if (roles.length && !roles.includes(payload.rol)) {
+    // Compat: tokens viejos guardaban 'role'; si no hay rol reconocido, asumir admin (token firmado válido)
+    const rol = payload.rol || payload.role || 'admin';
+    if (roles.length && !roles.includes(rol)) {
       return res.status(403).json({ error: 'No tenés permiso para esta acción' });
     }
-    req.admin = payload;
+    req.admin = { ...payload, rol };
     next();
   };
 }
@@ -389,25 +391,30 @@ app.delete('/api/socios/:id', requireWrite, async (req, res) => {
 //  CUOTAS
 // ═══════════════════════════════════════════════════════════
 app.post('/api/cuotas/emitir', requireWrite, async (req, res) => {
-  const { periodo, monto_activo, monto_cadete, monto_familiar, fecha_venc } = req.body;
+  const { periodo, fecha_venc } = req.body;
   if (!periodo) return res.status(400).json({ error: 'Falta "periodo"' });
 
+  // Cuota social (config), con default si la tabla aún no existe
+  let cuotaSocial = 1000;
+  const { data: cfg } = await supabase.from('config').select('valor').eq('clave', 'cuota_social').maybeSingle();
+  if (cfg && cfg.valor != null) cuotaSocial = Number(cfg.valor) || 1000;
+
+  // Precio (cuota deportiva) por disciplina
+  const precio = {};
+  const { data: discs } = await supabase.from('disciplinas').select('*').eq('activa', true);
+  (discs || []).forEach(d => { precio[d.nombre] = Number(d.precio) || 48000; });
+
+  // Socios activos con sus disciplinas
   const { data: socios, error } = await supabase
-    .from('socios')
-    .select('id, categoria')
-    .eq('activo', true)
-    .neq('categoria', 'Vitalicio');
+    .from('socios').select('id, disciplinas').eq('activo', true);
   if (error) return res.status(500).json({ error: error.message });
 
-  const montos = { Activo: monto_activo || 18000, Cadete: monto_cadete || 12000, Familiar: monto_familiar || 52000 };
   const venc = fecha_venc || `${periodo}-10`;
-
-  const rows = socios.map(s => ({
-    socio_id: s.id,
-    periodo,
-    monto: montos[s.categoria] || montos.Activo,
-    fecha_venc: venc,
-  }));
+  const rows = socios.map(s => {
+    const ds = Array.isArray(s.disciplinas) ? s.disciplinas : [];
+    const monto = cuotaSocial + ds.reduce((a, d) => a + (precio[d] || 0), 0);
+    return { socio_id: s.id, periodo, monto, fecha_venc: venc };
+  });
 
   const { data, error: insErr } = await supabase
     .from('cuotas')
@@ -415,7 +422,7 @@ app.post('/api/cuotas/emitir', requireWrite, async (req, res) => {
     .select();
   if (insErr) return res.status(500).json({ error: insErr.message });
 
-  res.json({ mensaje: `${data.length} cuotas emitidas para ${periodo}` });
+  res.json({ mensaje: `${rows.length} cuotas emitidas para ${periodo} (social $${cuotaSocial} + disciplinas)` });
 });
 
 app.post('/api/cuotas/:id/pagar', requireWrite, async (req, res) => {
@@ -945,6 +952,32 @@ app.get('/api/disciplinas', async (req, res) => {
     .order('nombre');
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+app.put('/api/disciplinas/:id', requireWrite, async (req, res) => {
+  const { precio } = req.body || {};
+  if (precio == null || isNaN(Number(precio))) return res.status(400).json({ error: 'Precio inválido' });
+  const { data, error } = await supabase
+    .from('disciplinas').update({ precio: Number(precio) }).eq('id', req.params.id).select().maybeSingle();
+  if (error) return res.status(500).json({ error: error.message + ' (¿corriste la migración 010?)' });
+  if (!data) return res.status(404).json({ error: 'Disciplina no encontrada' });
+  res.json(data);
+});
+
+// Config clave-valor (cuota social, etc.)
+app.get('/api/config', async (req, res) => {
+  const { data, error } = await supabase.from('config').select('*');
+  if (error) return res.json({ cuota_social: 1000 }); // tabla puede no existir aún
+  const cfg = {}; (data || []).forEach(r => { cfg[r.clave] = r.valor; });
+  res.json({ ...cfg, cuota_social: Number(cfg.cuota_social) || 1000 });
+});
+
+app.put('/api/config', requireWrite, async (req, res) => {
+  const rows = Object.entries(req.body || {}).map(([clave, valor]) => ({ clave, valor: String(valor) }));
+  if (!rows.length) return res.status(400).json({ error: 'Sin cambios' });
+  const { error } = await supabase.from('config').upsert(rows, { onConflict: 'clave' });
+  if (error) return res.status(500).json({ error: error.message + ' (¿corriste la migración 010?)' });
+  res.json({ mensaje: 'Configuración actualizada' });
 });
 
 // ═══════════════════════════════════════════════════════════
