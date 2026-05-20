@@ -231,6 +231,9 @@ app.post('/api/acceso/validar', async (req, res) => {
   if (!socio) {
     resultado = 'DENEGADO';
     motivo = 'Tag RFID no registrado en padrón';
+  } else if (socio.beca) {
+    resultado = 'OK';
+    motivo = 'Acceso habilitado — Becado';
   } else if (socio.estado_cuota === 'Moroso') {
     resultado = 'DENEGADO';
     motivo = `Cuota adeudada (saldo: $${Math.abs(socio.saldo).toLocaleString('es-AR')})`;
@@ -269,13 +272,13 @@ app.post('/api/acceso/validar', async (req, res) => {
 app.get('/api/acceso/padron', async (req, res) => {
   const { data, error } = await supabase
     .from('socios')
-    .select('rfid, nombre, categoria, estado_cuota')
+    .select('*')
     .eq('activo', true);
   if (error) return res.status(500).json({ error: error.message });
 
   const padron = data.map(s => ({
     rfid: s.rfid,
-    habilitado: s.estado_cuota !== 'Moroso' && s.estado_cuota !== 'Suspendido',
+    habilitado: !!s.beca || (s.estado_cuota !== 'Moroso' && s.estado_cuota !== 'Suspendido'),
     nombre: s.nombre,
     categoria: s.categoria,
   }));
@@ -329,7 +332,7 @@ app.get('/api/socios/:id', async (req, res) => {
 });
 
 app.post('/api/socios', requireWrite, async (req, res) => {
-  const { nombre, dni, rfid, categoria, estado_cuota, telefono, email, disciplinas, genero, fecha_nacimiento } = req.body;
+  const { nombre, dni, rfid, categoria, estado_cuota, telefono, email, disciplinas, genero, fecha_nacimiento, beca } = req.body;
   if (!nombre || !dni || !rfid) return res.status(400).json({ error: 'Campos requeridos: nombre, dni, rfid' });
 
   const { data: dupe } = await supabase
@@ -350,9 +353,13 @@ app.post('/api/socios', requireWrite, async (req, res) => {
   };
   if (genero) row.genero = genero;
   if (fecha_nacimiento) row.fecha_nacimiento = fecha_nacimiento;
+  if (beca !== undefined) row.beca = !!beca;
 
-  const { data, error } = await supabase.from('socios').insert(row).select().single();
-
+  let { data, error } = await supabase.from('socios').insert(row).select().single();
+  if (error && 'beca' in row && /beca/i.test(error.message || '')) {
+    delete row.beca; // columna beca aún no migrada (011): seguir sin ella
+    ({ data, error } = await supabase.from('socios').insert(row).select().single());
+  }
   if (error) {
     if (error.code === '23505') return res.status(409).json({ error: 'DNI o RFID ya existe en el padrón' });
     return res.status(500).json({ error: error.message });
@@ -361,18 +368,17 @@ app.post('/api/socios', requireWrite, async (req, res) => {
 });
 
 app.put('/api/socios/:id', requireWrite, async (req, res) => {
-  const allowed = ['nombre','dni','rfid','categoria','estado_cuota','saldo','telefono','email','disciplinas','foto_url','activo','genero','fecha_nacimiento'];
+  const allowed = ['nombre','dni','rfid','categoria','estado_cuota','saldo','telefono','email','disciplinas','foto_url','activo','genero','fecha_nacimiento','beca'];
   const updates = {};
   for (const k of allowed) if (k in req.body) updates[k] = req.body[k];
   if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Sin campos válidos' });
 
-  const { data, error } = await supabase
-    .from('socios')
-    .update(updates)
-    .eq('id', req.params.id)
-    .select()
-    .maybeSingle();
-
+  let { data, error } = await supabase
+    .from('socios').update(updates).eq('id', req.params.id).select().maybeSingle();
+  if (error && 'beca' in updates && /beca/i.test(error.message || '')) {
+    delete updates.beca; // columna beca aún no migrada (011): seguir sin ella
+    ({ data, error } = await supabase.from('socios').update(updates).eq('id', req.params.id).select().maybeSingle());
+  }
   if (error) return res.status(500).json({ error: error.message });
   if (!data) return res.status(404).json({ error: 'Socio no encontrado' });
   res.json(data);
@@ -406,11 +412,11 @@ app.post('/api/cuotas/emitir', requireWrite, async (req, res) => {
 
   // Socios activos con sus disciplinas
   const { data: socios, error } = await supabase
-    .from('socios').select('id, disciplinas').eq('activo', true);
+    .from('socios').select('*').eq('activo', true);
   if (error) return res.status(500).json({ error: error.message });
 
   const venc = fecha_venc || `${periodo}-10`;
-  const rows = socios.map(s => {
+  const rows = socios.filter(s => !s.beca).map(s => {
     const ds = Array.isArray(s.disciplinas) ? s.disciplinas : [];
     const monto = cuotaSocial + ds.reduce((a, d) => a + (precio[d] || 0), 0);
     return { socio_id: s.id, periodo, monto, fecha_venc: venc };

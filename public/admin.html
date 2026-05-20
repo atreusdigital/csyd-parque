@@ -455,11 +455,13 @@ function toast(msg, type = 'ok') {
 /* Display helpers */
 function displayEstado(s) {
   if (s.activo === false) return { label: 'De Baja', cls: 'b-warn' };
+  if (s.beca) return { label: 'BECADO', cls: 'b-info' };
   if (s.estado_cuota === 'Moroso' || s.estado_cuota === 'Suspendido') return { label: 'INHABILITADO', cls: 'b-err' };
   return { label: 'HABILITADO', cls: 'b-ok' };
 }
 function displayGenero(g) { return g === 'F' ? 'Femenino' : g === 'M' ? 'Masculino' : g === 'O' ? 'Otro' : '—'; }
 function cuotaMensual(s) {
+  if (s.beca) return 0;
   const social = window._cuotaSocial ?? 1000;
   const precios = window._precios || {};
   const ds = Array.isArray(s.disciplinas) ? s.disciplinas : [];
@@ -1331,6 +1333,7 @@ window.nuevoSocio = async () => {
         { value: 'habilitado', label: 'Habilitado' },
         { value: 'inhabilitado', label: 'Inhabilitado' },
       ], default: 'habilitado' },
+      { name: 'beca', label: 'Becado — entra sin pagar cuota (ej. jugadores de primera)', type: 'checkbox', full: true },
       { name: 'fecha_nacimiento', label: 'Fecha de nacimiento', type: 'date' },
       { name: 'telefono', label: 'Teléfono', placeholder: '11-XXXX-XXXX' },
       { name: 'email', label: 'Email', type: 'email' },
@@ -1457,6 +1460,7 @@ window.editarSocio = async (id) => {
     initial: {
       nombre: s.nombre, dni: s.dni, rfid: s.rfid, genero: s.genero || '',
       estado: s.estado_cuota === 'Al dia' ? 'habilitado' : 'inhabilitado',
+      beca: s.beca,
       fecha_nacimiento: s.fecha_nacimiento || '', telefono: s.telefono || '',
       email: s.email || '', disciplinas: Array.isArray(s.disciplinas) ? s.disciplinas : [],
     },
@@ -1474,6 +1478,7 @@ window.editarSocio = async (id) => {
         { value: 'habilitado', label: 'Habilitado' },
         { value: 'inhabilitado', label: 'Inhabilitado' },
       ]},
+      { name: 'beca', label: 'Becado — entra sin pagar cuota (ej. jugadores de primera)', type: 'checkbox', full: true },
       { name: 'fecha_nacimiento', label: 'Fecha de nacimiento', type: 'date' },
       { name: 'telefono', label: 'Teléfono', placeholder: '11-XXXX-XXXX' },
       { name: 'email', label: 'Email', type: 'email' },
