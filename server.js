@@ -12,6 +12,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
+const { execFile } = require('child_process');
 const { supabase } = require('./db');
 const asistenteRouter = require('./asistente');
 
@@ -211,6 +212,21 @@ const HORAS_ALQUILER = [21, 22]; // 21-22 y 22-23
 const DIAS_A_MOSTRAR = 7;
 
 // ═══════════════════════════════════════════════════════════
+//  CONTROL FÍSICO DEL MOLINETE (solo PC de la entrada)
+//  Dispara el relé ejecutando el .exe del proveedor (GSD).
+//  Se activa SOLO si MOLINETE_EXE_PATH está definido en .env;
+//  en Vercel no existe la variable → no hace nada (no rompe).
+// ═══════════════════════════════════════════════════════════
+function abrirMolinete() {
+  const exe = process.env.MOLINETE_EXE_PATH;
+  if (!exe) return; // entorno sin hardware (ej: Vercel) → no-op
+  execFile(exe, (err) => {
+    if (err) console.error('[molinete] no se pudo abrir:', err.message);
+    else console.log('[molinete] relé disparado → ABRIR');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
 //  VALIDAR ACCESO (endpoint para el molinete)
 // ═══════════════════════════════════════════════════════════
 app.post('/api/acceso/validar', async (req, res) => {
@@ -244,6 +260,9 @@ app.post('/api/acceso/validar', async (req, res) => {
     resultado = 'OK';
     motivo = `Acceso habilitado — ${socio.categoria}`;
   }
+
+  // Si dio OK, disparar el relé del molinete (no-op si no hay hardware)
+  if (resultado === 'OK') abrirMolinete();
 
   // Log de acceso (no bloquea respuesta al molinete)
   supabase.from('accesos').insert({
