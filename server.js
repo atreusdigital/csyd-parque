@@ -12,6 +12,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
+const fs = require('fs');
 const { execFile } = require('child_process');
 const { supabase } = require('./db');
 const asistenteRouter = require('./asistente');
@@ -227,6 +228,70 @@ function abrirMolinete() {
 }
 
 // ═══════════════════════════════════════════════════════════
+//  PADRÓN OFFLINE-FIRST (solo PC de la entrada, MODO_LOCAL=1)
+//  Cachea el padrón en disco para validar SIN internet.
+//  Si se cae el wifi, el molinete sigue abriendo desde el cache.
+//  En Vercel MODO_LOCAL no existe → usa Supabase online (igual que antes).
+// ═══════════════════════════════════════════════════════════
+const MODO_LOCAL = process.env.MODO_LOCAL === '1';
+const PADRON_CACHE_FILE = path.join(__dirname, 'padron-cache.json');
+const ACCESOS_COLA_FILE = path.join(__dirname, 'accesos-cola.json');
+const SYNC_INTERVAL_MS = 5 * 60 * 1000; // refrescar padrón cada 5 min
+
+let padronCache = new Map(); // rfid → socio completo
+
+function cargarCacheDisco() {
+  try {
+    const arr = JSON.parse(fs.readFileSync(PADRON_CACHE_FILE, 'utf8'));
+    padronCache = new Map(arr.map(s => [s.rfid, s]));
+    console.log(`[padron] cache cargado de disco: ${padronCache.size} socios`);
+  } catch {
+    console.log('[padron] sin cache en disco todavía (primer arranque)');
+  }
+}
+
+async function refrescarPadron() {
+  const { data, error } = await supabase.from('socios').select('*').eq('activo', true);
+  if (error || !data) {
+    console.error('[padron] no se pudo refrescar (¿sin internet?):', error?.message || 'sin datos');
+    return false;
+  }
+  padronCache = new Map(data.map(s => [s.rfid, s]));
+  try { fs.writeFileSync(PADRON_CACHE_FILE, JSON.stringify(data)); }
+  catch (e) { console.error('[padron] no se pudo guardar cache en disco:', e.message); }
+  console.log(`[padron] sincronizado desde Supabase: ${padronCache.size} socios`);
+  await vaciarColaAccesos(); // hay internet → subir accesos que quedaron pendientes
+  return true;
+}
+
+function encolarAcceso(registro) {
+  let cola = [];
+  try { cola = JSON.parse(fs.readFileSync(ACCESOS_COLA_FILE, 'utf8')); } catch {}
+  cola.push(registro);
+  try { fs.writeFileSync(ACCESOS_COLA_FILE, JSON.stringify(cola)); }
+  catch (e) { console.error('[accesos] no se pudo encolar:', e.message); }
+}
+
+async function vaciarColaAccesos() {
+  let cola = [];
+  try { cola = JSON.parse(fs.readFileSync(ACCESOS_COLA_FILE, 'utf8')); } catch { return; }
+  if (!cola.length) return;
+  const { error } = await supabase.from('accesos').insert(cola);
+  if (error) { console.error('[accesos] no se pudo vaciar la cola:', error.message); return; }
+  try { fs.writeFileSync(ACCESOS_COLA_FILE, '[]'); } catch {}
+  console.log(`[accesos] cola offline subida: ${cola.length} registros`);
+}
+
+// Regla de negocio única (sirve para online y offline)
+function decidirAcceso(socio) {
+  if (!socio) return { resultado: 'DENEGADO', motivo: 'Tag RFID no registrado en padrón' };
+  if (socio.beca) return { resultado: 'OK', motivo: 'Acceso habilitado — Becado' };
+  if (socio.estado_cuota === 'Moroso') return { resultado: 'DENEGADO', motivo: `Cuota adeudada (saldo: $${Math.abs(socio.saldo).toLocaleString('es-AR')})` };
+  if (socio.estado_cuota === 'Suspendido') return { resultado: 'DENEGADO', motivo: 'Socio suspendido — contactar administración' };
+  return { resultado: 'OK', motivo: `Acceso habilitado — ${socio.categoria}` };
+}
+
+// ═══════════════════════════════════════════════════════════
 //  VALIDAR ACCESO (endpoint para el molinete)
 // ═══════════════════════════════════════════════════════════
 app.post('/api/acceso/validar', async (req, res) => {
@@ -234,47 +299,41 @@ app.post('/api/acceso/validar', async (req, res) => {
   const tag = rfid || carnet;
   if (!tag) return res.status(400).json({ resultado: 'ERROR', motivo: 'Falta campo "rfid"' });
 
-  const { data: socio, error } = await supabase
-    .from('socios')
-    .select('*')
-    .eq('rfid', tag)
-    .eq('activo', true)
-    .maybeSingle();
-
-  if (error) return res.status(500).json({ resultado: 'ERROR', motivo: error.message });
-
-  let resultado, motivo;
-  if (!socio) {
-    resultado = 'DENEGADO';
-    motivo = 'Tag RFID no registrado en padrón';
-  } else if (socio.beca) {
-    resultado = 'OK';
-    motivo = 'Acceso habilitado — Becado';
-  } else if (socio.estado_cuota === 'Moroso') {
-    resultado = 'DENEGADO';
-    motivo = `Cuota adeudada (saldo: $${Math.abs(socio.saldo).toLocaleString('es-AR')})`;
-  } else if (socio.estado_cuota === 'Suspendido') {
-    resultado = 'DENEGADO';
-    motivo = 'Socio suspendido — contactar administración';
+  // En modo local validamos contra el cache (offline-first); online consultamos Supabase.
+  let socio;
+  if (MODO_LOCAL) {
+    socio = padronCache.get(tag) || null;
   } else {
-    resultado = 'OK';
-    motivo = `Acceso habilitado — ${socio.categoria}`;
+    const { data, error } = await supabase
+      .from('socios')
+      .select('*')
+      .eq('rfid', tag)
+      .eq('activo', true)
+      .maybeSingle();
+    if (error) return res.status(500).json({ resultado: 'ERROR', motivo: error.message });
+    socio = data;
   }
+
+  const { resultado, motivo } = decidirAcceso(socio);
 
   // Si dio OK, disparar el relé del molinete (no-op si no hay hardware)
   if (resultado === 'OK') abrirMolinete();
 
-  // Log de acceso (no bloquea respuesta al molinete)
-  supabase.from('accesos').insert({
+  // Log de acceso (no bloquea respuesta al molinete; si no hay internet se encola)
+  const registro = {
     rfid: tag,
     socio_id: socio?.id ?? null,
     puerta: puerta || 'Molinete Principal',
     resultado,
     motivo,
     ip_placa: ip_placa || null,
-  }).then(({ error }) => {
-    if (error) console.error('[accesos.insert]', error.message);
-  });
+  };
+  supabase.from('accesos').insert(registro).then(({ error }) => {
+    if (error) {
+      console.error('[accesos.insert]', error.message);
+      if (MODO_LOCAL) encolarAcceso(registro);
+    }
+  }).catch(() => { if (MODO_LOCAL) encolarAcceso(registro); });
 
   res.json({
     resultado,
@@ -1120,6 +1179,12 @@ app.get('/api/health', async (req, res) => {
 // Solo escuchamos puerto si nos ejecutan como script standalone (node server.js).
 // En Vercel este archivo se importa como módulo y el handler en /api/index.js se encarga.
 if (require.main === module) {
+  // Offline-first: cargar padrón cacheado y mantenerlo sincronizado
+  if (MODO_LOCAL) {
+    cargarCacheDisco();
+    refrescarPadron();
+    setInterval(refrescarPadron, SYNC_INTERVAL_MS);
+  }
   app.listen(PORT, () => {
     console.log(`
 ╔══════════════════════════════════════════════════════════╗
@@ -1131,6 +1196,7 @@ if (require.main === module) {
 ║  Molinete: POST http://localhost:${PORT}/api/acceso/validar  ║
 ╚══════════════════════════════════════════════════════════╝
   `);
+    if (MODO_LOCAL) console.log(`  🔌 Modo offline-first ACTIVO — valida desde cache local (${padronCache.size} socios)\n`);
   });
 }
 

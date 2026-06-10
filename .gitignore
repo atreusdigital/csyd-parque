@@ -5,6 +5,8 @@ node_modules/
 .vercel
 *.db
 backup-socios-*.json
+padron-cache.json
+accesos-cola.json
 .DS_Store
 .claude/
 npm-debug.log*
