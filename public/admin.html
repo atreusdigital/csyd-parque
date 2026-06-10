@@ -230,13 +230,13 @@ function isAdminLogged() {
 
 /* ═══ Roles y permisos por sección ═══ */
 const PERMS = {
-  admin:     { ver: ['dashboard','socios','cuotas','ingresos','egresos','finanzas','alquileres','fijos','accesos','comunicacion','ia','usuarios','config'],
+  admin:     { ver: ['dashboard','socios','cuotas','ingresos','egresos','finanzas','alquileres','fijos','accesos','comunicacion','ia','usuarios','config','manual'],
                editar: ['socios','cuotas','ingresos','egresos','finanzas','alquileres','fijos','accesos','comunicacion','ia','usuarios','config'] },
-  tesoreria: { ver: ['dashboard','socios','cuotas','ingresos','egresos','finanzas','comunicacion','ia'],
+  tesoreria: { ver: ['dashboard','socios','cuotas','ingresos','egresos','finanzas','comunicacion','ia','manual'],
                editar: ['cuotas','ingresos','egresos','finanzas','comunicacion','ia'] },
-  recepcion: { ver: ['dashboard','socios','cuotas','alquileres','fijos','accesos','comunicacion'],
+  recepcion: { ver: ['dashboard','socios','cuotas','alquileres','fijos','accesos','comunicacion','manual'],
                editar: ['socios','alquileres','fijos','accesos','comunicacion'] },
-  profe:     { ver: ['dashboard','socios','accesos'], editar: [] },
+  profe:     { ver: ['dashboard','socios','accesos','manual'], editar: [] },
 };
 function rolActual() { return localStorage.getItem('parque_admin_rol') || 'admin'; }
 function rolLabel(r) { return ({admin:'Admin', tesoreria:'Tesorería', recepcion:'Recepción', profe:'Profe'})[r] || r; }
@@ -503,6 +503,7 @@ const MENU = [
     { page: 'usuarios', label: 'Usuarios' },
     { page: 'config', label: 'Configuración' },
   ]},
+  { page: 'manual', label: '📖 Manual del sistema' },
 ];
 function grupoDe(page) {
   for (const m of MENU) if (m.items && m.items.some(i => i.page === page)) return m.group;
@@ -1893,7 +1894,209 @@ window.guardarPrecioDisc = async (id) => {
 /* =========================================================
    POST-RENDER
    ========================================================= */
+/* =========================================================
+   MANUAL DEL SISTEMA (contenido estático, visible a todos)
+   ========================================================= */
+pages.manual = async () => {
+  const SECS = [
+    { ic:'🚀', t:'Primeros pasos', roles:['Admin','Tesorería','Recepción','Profe'],
+      body:`<p>Este es el panel de gestión del Club Social y Deportivo Parque. Desde acá manejás socios, cuotas, finanzas, alquileres, comunicación y el control de acceso del molinete.</p>
+      <ul>
+        <li><b>Iniciar sesión:</b> entrá con tu <b>usuario y contraseña</b> (te los crea un administrador).</li>
+        <li><b>El menú de la izquierda</b> muestra solo las secciones que tu rol puede usar. Si no ves una sección, es porque tu rol no tiene acceso.</li>
+        <li><b>Tu nombre y rol</b> aparecen arriba a la derecha.</li>
+        <li>Para <b>cerrar sesión</b>, usá el botón de salir del encabezado.</li>
+      </ul>
+      <div class="man-tip">💡 Si olvidás tu contraseña, pedile a un administrador que te la cambie desde <b>Usuarios</b>.</div>` },
+
+    { ic:'📊', t:'Dashboard', roles:['Admin','Tesorería','Recepción','Profe'],
+      body:`<p>Es la pantalla de inicio. Muestra el estado del club de un vistazo.</p>
+      <ul>
+        <li><b>Socios activos / Al día / Inhabilitados:</b> cuántos socios hay y cuántos están bloqueados por deuda.</li>
+        <li><b>Ingresos, Gastos y Balance:</b> resumen financiero del club.</li>
+        <li><b>Alertas:</b> avisos automáticos (socios inhabilitados, balance positivo o negativo).</li>
+        <li><b>Desglose del mes:</b> ingresos y gastos agrupados por categoría.</li>
+      </ul>` },
+
+    { ic:'👥', t:'Padrón de Socios', roles:['Admin','Tesorería','Recepción','Profe'],
+      body:`<p>El listado completo de socios del club. <b>Editan:</b> Admin y Recepción · <b>Solo ven:</b> Tesorería y Profe.</p>
+      <ul>
+        <li><b>Crear socio:</b> botón "Nuevo socio". Cargá nombre, DNI, RFID (10 dígitos del llavero), género, teléfono, email y las disciplinas que hace. Marcá <b>Beca</b> si no debe pagar cuota.</li>
+        <li><b>Buscar:</b> escribí nombre, DNI o RFID en el buscador.</li>
+        <li><b>Filtrar:</b> por estado (Habilitado / Inhabilitado / De baja) y por género.</li>
+        <li><b>Ver ficha:</b> botón "Ver" — muestra datos, cuotas impagas y saldo. Desde ahí podés <b>registrar un pago</b>, <b>editar</b> o <b>dar de baja</b>.</li>
+        <li><b>Exportar CSV:</b> descarga todo el padrón en una planilla para Excel.</li>
+      </ul>
+      <div class="man-tip">💡 El <b>RFID</b> son los 10 dígitos del llavero. El <b>carnet</b> (CP-0001, CP-0002…) lo asigna el sistema solo.</div>` },
+
+    { ic:'💵', t:'Cuotas y Cobranzas', roles:['Admin','Tesorería','Recepción'],
+      body:`<p>Gestión de las cuotas mensuales. <b>Editan:</b> Admin y Tesorería · <b>Solo ve:</b> Recepción.</p>
+      <ul>
+        <li><b>Emitir cuotas del período:</b> genera de una sola vez la cuota del mes para todos los socios activos (los becados no pagan). Elegís el período (mes) y la fecha de vencimiento.</li>
+        <li><b>Registrar pago:</b> desde la lista de morosos o desde la ficha del socio. El pago se aplica de la cuota más vieja a la más nueva y <b>queda registrado como ingreso automáticamente</b>.</li>
+        <li><b>Actualizar morosidad:</b> recalcula quién está al día y quién queda bloqueado según las cuotas vencidas.</li>
+        <li><b>Morosos:</b> lista de quienes deben, con su saldo y botón para recordar/cobrar.</li>
+      </ul>
+      <div class="man-tip">💡 <b>Cómo se calcula la cuota:</b> Cuota Social + la suma de las disciplinas que hace el socio. Los montos se ajustan en <b>Configuración</b>.</div>
+      <div class="man-tip">💡 <b>Período de gracia:</b> después del vencimiento hay unos días (configurable) antes de que el molinete bloquee al socio.</div>` },
+
+    { ic:'📈', t:'Ingresos', roles:['Admin','Tesorería'],
+      body:`<p>Todo el dinero que entra al club. <b>Editan:</b> Admin y Tesorería.</p>
+      <ul>
+        <li><b>Registrar ingreso:</b> fecha, concepto, categoría (cuota social/deportiva, alquileres, sponsors, donaciones, otros) y monto.</li>
+        <li><b>Listado y desglose</b> por categoría.</li>
+      </ul>
+      <div class="man-tip">💡 Los pagos de cuota que registrás en la ficha del socio <b>ya aparecen acá solos</b> — no los cargues dos veces.</div>` },
+
+    { ic:'📉', t:'Egresos (Gastos)', roles:['Admin','Tesorería'],
+      body:`<p>Todo el dinero que sale del club. <b>Editan:</b> Admin y Tesorería.</p>
+      <ul>
+        <li><b>Registrar egreso:</b> fecha, concepto, categoría (sueldos, servicios, mantenimiento, insumos, ligas, impuestos, otros) y monto.</li>
+        <li><b>Listado y desglose</b> por categoría, de mayor a menor.</li>
+      </ul>` },
+
+    { ic:'⚖️', t:'Finanzas (resumen)', roles:['Admin','Tesorería'],
+      body:`<p>Visión financiera unificada. <b>Editan:</b> Admin y Tesorería.</p>
+      <ul>
+        <li><b>Balance:</b> ingresos menos gastos, con el margen de ganancia.</li>
+        <li><b>Ingresos y gastos recientes</b> en una sola pantalla, con accesos rápidos para registrar.</li>
+      </ul>` },
+
+    { ic:'🏟️', t:'Alquileres de Cancha', roles:['Admin','Recepción'],
+      body:`<p>Reservas de las canchas. <b>Editan:</b> Admin y Recepción.</p>
+      <ul>
+        <li><b>Grilla:</b> 3 canchas × 2 horarios (21–22 y 22–23) × 7 días. Cada celda muestra si está libre, pendiente de pago o pagada.</li>
+        <li><b>Crear reserva:</b> hacé click en una celda libre y cargá cliente, teléfono y monto (viene precargado con el precio de la cancha).</li>
+        <li><b>Navegar semanas:</b> botones "Semana anterior", "Hoy" y "Semana próxima".</li>
+        <li><b>Editar / cancelar:</b> click en una reserva existente.</li>
+      </ul>
+      <div class="man-tip">💡 Precios: Cancha 1 (José Batista) y 2 (Ramón Maddoni) $90.000 · Cancha 3 (César La Paglia, futsal) $150.000.</div>` },
+
+    { ic:'🔁', t:'Turnos Fijos Recurrentes', roles:['Admin','Recepción'],
+      body:`<p>Horarios que se repiten todas las semanas (ej.: un equipo que entrena todos los martes a las 21). <b>Editan:</b> Admin y Recepción.</p>
+      <ul>
+        <li><b>Crear turno fijo:</b> elegí cancha, día de la semana, hora y el nombre del equipo/cliente.</li>
+        <li>Ese horario queda <b>bloqueado automáticamente</b> en la grilla de alquileres (nadie lo puede reservar online).</li>
+        <li><b>Eliminar:</b> lo saca del bloqueo.</li>
+      </ul>` },
+
+    { ic:'🚪', t:'Molinetes / Accesos', roles:['Admin','Recepción','Profe'],
+      body:`<p>Control de acceso por llavero RFID. <b>Editan:</b> Admin y Recepción · <b>Solo ve:</b> Profe.</p>
+      <ul>
+        <li><b>Pantalla del molinete:</b> se abre en <b>/molinete.html</b> (a pantalla completa en la entrada). El socio acerca el llavero y muestra su carnet con foto; si está habilitado, abre.</li>
+        <li><b>Simulador:</b> en el panel podés probar un carnet o RFID sin el hardware, para ver si daría OK o DENEGADO.</li>
+        <li><b>Log de accesos:</b> historial de quién pasó, cuándo y el resultado.</li>
+      </ul>
+      <div class="man-tip">💡 <b>Quién puede pasar:</b> socios "Al día" y becados. <b>No pasan:</b> suspendidos o con deuda vencida (pasado el período de gracia).</div>
+      <div class="man-tip">💡 La PC de la entrada funciona <b>aunque se caiga internet</b>: valida con el padrón guardado localmente y sube los registros cuando vuelve la conexión.</div>` },
+
+    { ic:'📣', t:'Comunicación / Redes Sociales', roles:['Admin','Tesorería','Recepción'],
+      body:`<p>Mensajería a los socios. <b>Editan:</b> Admin, Tesorería y Recepción.</p>
+      <ul>
+        <li><b>WhatsApp:</b> elegí una plantilla (recordatorio de cuota, bienvenida, partido, cumpleaños) y los destinatarios (inhabilitados, cumpleañeros del mes, todos). El botón "Enviar" abre WhatsApp con el mensaje ya armado.</li>
+        <li><b>Email:</b> igual que WhatsApp pero por correo (asunto + cuerpo).</li>
+        <li><b>Personalización:</b> donde dice {nombre} se reemplaza por el nombre de cada socio.</li>
+      </ul>
+      <div class="man-tip">💡 Hoy el envío es de a uno (clic a clic). El envío masivo automático por WhatsApp/Email está en el roadmap.</div>` },
+
+    { ic:'🤖', t:'Inteligencia Artificial', roles:['Admin','Tesorería'],
+      body:`<p>Asistente con IA para consultar datos del club en lenguaje natural. <b>Usan:</b> Admin y Tesorería.</p>
+      <ul>
+        <li><b>Chat:</b> preguntá cosas como "cuántos socios juegan futsal", "top 5 morosos" o "balance del mes".</li>
+        <li><b>Sugerencias de cobranza:</b> ranking de morosos por riesgo con la acción recomendada.</li>
+      </ul>` },
+
+    { ic:'🔑', t:'Usuarios y Permisos', roles:['Admin'],
+      body:`<p>Gestión de quién puede entrar al panel. <b>Solo Admin.</b></p>
+      <ul>
+        <li><b>Crear usuario:</b> nombre, usuario, contraseña y rol (Administrador, Tesorería, Recepción o Profesor).</li>
+        <li><b>Editar:</b> cambiar nombre, rol, activar/desactivar o poner una nueva contraseña.</li>
+        <li><b>Desactivar:</b> el usuario deja de poder ingresar (no se borra).</li>
+      </ul>
+      <div class="man-tip">💡 La contraseña se guarda cifrada — nadie, ni el admin, puede verla; solo reemplazarla.</div>` },
+
+    { ic:'⚙️', t:'Configuración', roles:['Admin'],
+      body:`<p>Parámetros del sistema. <b>Solo Admin edita</b> (otros roles no la ven).</p>
+      <ul>
+        <li><b>Cuota Social:</b> el monto base que pagan todos los socios.</li>
+        <li><b>Días de gracia:</b> cuántos días después del vencimiento antes de bloquear el molinete.</li>
+        <li><b>Precios de disciplinas:</b> el valor mensual de cada disciplina (se suma a la cuota social).</li>
+        <li><b>Identidad del club e integraciones:</b> datos y estado de los servicios conectados (Supabase, IA, Mercado Pago, etc.).</li>
+      </ul>` },
+
+    { ic:'🛡️', t:'Roles y permisos (resumen)', roles:['Admin','Tesorería','Recepción','Profe'],
+      body:`<p>Qué puede hacer cada rol:</p>
+      <ul>
+        <li><b>Administrador:</b> acceso total, incluido Usuarios y Configuración.</li>
+        <li><b>Tesorería:</b> Cuotas, Ingresos, Egresos, Finanzas, Comunicación e IA.</li>
+        <li><b>Recepción:</b> Socios, Alquileres, Turnos Fijos, Molinete/Accesos y Comunicación.</li>
+        <li><b>Profesor/Entrenador:</b> solo consulta de Socios y Accesos.</li>
+      </ul>
+      <div class="man-tip">💡 Existe un <b>admin maestro de respaldo</b> que siempre puede entrar aunque se borren usuarios.</div>` },
+
+    { ic:'❓', t:'Preguntas frecuentes', roles:['Admin','Tesorería','Recepción','Profe'],
+      body:`<ul>
+        <li><b>¿Por qué un socio no abre el molinete?</b> Porque está suspendido o tiene una cuota vencida pasada la gracia. Revisalo en Cuotas y registrá el pago.</li>
+        <li><b>¿Qué es "Habilitado / Inhabilitado"?</b> Habilitado = al día, puede entrar. Inhabilitado = debe y está bloqueado.</li>
+        <li><b>¿Qué es una Beca?</b> Un socio becado no paga cuota y siempre puede entrar.</li>
+        <li><b>¿Qué pasa si se corta internet en la entrada?</b> El molinete sigue funcionando con el padrón guardado en la PC.</li>
+        <li><b>¿Dónde cambio el precio de la cuota?</b> En Configuración (solo Admin).</li>
+      </ul>` },
+  ];
+
+  const renderRoles = (arr) => arr.length === 4
+    ? '<span class="badge b-ok">Todos los roles</span>'
+    : arr.map(r => `<span class="badge b-ok">${r}</span>`).join('');
+
+  return `
+  <style>
+  .man-search{width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--borde);border-radius:8px;font-size:14px;margin-bottom:16px}
+  .man-item{background:#fff;border:1px solid #e2e8e4;border-left:4px solid var(--verde);border-radius:10px;margin-bottom:10px;overflow:hidden}
+  .man-item>summary{cursor:pointer;padding:13px 16px;font-weight:700;color:var(--verde-osc);font-size:15px;list-style:none;display:flex;align-items:center;gap:9px;user-select:none}
+  .man-item>summary::-webkit-details-marker{display:none}
+  .man-item>summary .chev2{margin-left:auto;color:var(--rojo);transition:transform .15s;font-size:13px}
+  .man-item[open]>summary .chev2{transform:rotate(90deg)}
+  .man-item[open]>summary{background:var(--verde-claro)}
+  .man-body{padding:8px 18px 16px;font-size:14px;line-height:1.6;color:#2a3a2f}
+  .man-body p{margin:4px 0 8px}
+  .man-body ul{margin:8px 0;padding-left:20px}
+  .man-body li{margin-bottom:6px}
+  .man-roles{display:flex;gap:5px;flex-wrap:wrap;margin:2px 0 4px}
+  .man-tip{background:#fff8e1;border-left:3px solid #f0b400;padding:8px 12px;border-radius:6px;margin-top:10px;font-size:13px}
+  .man-empty{color:#999;padding:24px;text-align:center}
+  </style>
+  <h2 class="page">📖 Manual del sistema</h2>
+  <p class="mini" style="margin:-6px 0 14px">Guía de uso de todas las secciones del panel. Hacé click en cada tema para desplegarlo, o buscá una palabra.</p>
+  <input id="manBuscar" class="man-search" type="search" placeholder="🔎 Buscar en el manual (ej: beca, cuota, molinete…)" autocomplete="off">
+  <div id="manLista">
+    ${SECS.map(s => `
+      <details class="man-item">
+        <summary>${s.ic} ${s.t}<span class="chev2">▸</span></summary>
+        <div class="man-body">
+          <div class="man-roles">${renderRoles(s.roles)}</div>
+          ${s.body}
+        </div>
+      </details>`).join('')}
+    <div class="man-empty" id="manVacio" style="display:none">No se encontró nada con ese término.</div>
+  </div>`;
+};
+
 function afterRender(p) {
+  if (p === 'manual') {
+    const inp = document.getElementById('manBuscar');
+    const items = Array.from(document.querySelectorAll('#manLista .man-item'));
+    const vacio = document.getElementById('manVacio');
+    if (inp) inp.addEventListener('input', () => {
+      const q = inp.value.trim().toLowerCase();
+      let visibles = 0;
+      items.forEach(it => {
+        const match = !q || it.textContent.toLowerCase().includes(q);
+        it.style.display = match ? '' : 'none';
+        if (match) { visibles++; if (q) it.open = true; else it.open = false; }
+      });
+      if (vacio) vacio.style.display = visibles ? 'none' : 'block';
+    });
+  }
   if (p === 'socios') {
     renderSocios();
     ['buscaSocio','filtroEstado','filtroGenero'].forEach(id => {
