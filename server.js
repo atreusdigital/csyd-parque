@@ -791,6 +791,56 @@ app.get('/api/alquileres/grilla', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════
+//  INSTAGRAM — feed en vivo (Instagram Graph API)
+//  Requiere env: IG_ACCESS_TOKEN (long-lived) + IG_USER_ID.
+//  Si faltan, devuelve items: [] y la sección de la web se auto-oculta.
+// ═══════════════════════════════════════════════════════════
+const IG_ACCESS_TOKEN = process.env.IG_ACCESS_TOKEN || '';
+const IG_USER_ID = process.env.IG_USER_ID || '';
+const IG_CACHE_TTL_MS = 15 * 60 * 1000; // 15 min
+let igCache = { at: 0, data: null };
+
+app.get('/api/instagram/feed', async (req, res) => {
+  // Sin credenciales → respuesta vacía, la web esconde la sección.
+  if (!IG_ACCESS_TOKEN || !IG_USER_ID) {
+    return res.json({ items: [], usuario: 'club.parque', configurado: false });
+  }
+  // Caché en memoria (evita golpear la API en cada visita).
+  if (igCache.data && (Date.now() - igCache.at) < IG_CACHE_TTL_MS) {
+    return res.json(igCache.data);
+  }
+  try {
+    const limit = Math.min(Number(req.query.limit) || 9, 12);
+    const fields = 'id,caption,media_type,media_url,permalink,thumbnail_url,timestamp';
+    const url = `https://graph.facebook.com/v21.0/${IG_USER_ID}/media`
+      + `?fields=${fields}&limit=${limit}&access_token=${encodeURIComponent(IG_ACCESS_TOKEN)}`;
+    const r = await fetch(url);
+    const j = await r.json();
+    if (!r.ok || j.error) {
+      const msg = j.error ? j.error.message : `HTTP ${r.status}`;
+      // Si hay caché viejo, servirlo antes que romper la web.
+      if (igCache.data) return res.json(igCache.data);
+      return res.status(502).json({ items: [], configurado: true, error: msg });
+    }
+    const items = (j.data || []).map(m => ({
+      id: m.id,
+      permalink: m.permalink,
+      caption: m.caption || '',
+      es_video: m.media_type === 'VIDEO',
+      // Para videos usamos el thumbnail; para fotos/carruseles la imagen.
+      imagen: m.media_type === 'VIDEO' ? (m.thumbnail_url || m.media_url) : m.media_url,
+      timestamp: m.timestamp,
+    })).filter(m => m.imagen);
+    const data = { items, usuario: 'club.parque', configurado: true };
+    igCache = { at: Date.now(), data };
+    res.json(data);
+  } catch (e) {
+    if (igCache.data) return res.json(igCache.data);
+    res.status(500).json({ items: [], configurado: true, error: String(e.message || e) });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════
 //  RESERVA PÚBLICA CON MERCADOPAGO
 // ═══════════════════════════════════════════════════════════
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';

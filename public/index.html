@@ -1647,6 +1647,98 @@
   </div>
 </section>
 
+<!-- ═══════════════════ INSTAGRAM ═══════════════════ -->
+<style>
+  .ig{background:var(--hueso);padding:96px 0}
+  .ig .wrap{max-width:1080px}
+  .ig-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:40px}
+  .ig-head .intro{max-width:620px}
+  .ig-profile{display:flex;align-items:center;gap:16px;
+    background:#fff;border:1px solid #e6e2da;border-radius:16px;padding:16px 20px;
+    box-shadow:0 10px 30px rgba(14,23,17,.06)}
+  .ig-avatar{width:60px;height:60px;border-radius:50%;flex:none;padding:3px;
+    background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);
+    display:grid;place-items:center}
+  .ig-avatar img{width:100%;height:100%;border-radius:50%;background:#fff;object-fit:contain;padding:6px;border:2px solid #fff}
+  .ig-user{display:flex;flex-direction:column;gap:2px}
+  .ig-user .handle{font-weight:800;font-size:18px;color:var(--tinta);letter-spacing:-.01em}
+  .ig-user .name{font-size:13px;color:var(--mute)}
+  .ig-follow{margin-top:6px;align-self:flex-start}
+  .ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .ig-tile{position:relative;display:block;aspect-ratio:1/1;border-radius:12px;overflow:hidden;
+    background:var(--verde-claro);text-decoration:none}
+  .ig-tile img{width:100%;height:100%;object-fit:cover;display:block;
+    transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+  .ig-tile:hover img{transform:scale(1.07)}
+  .ig-tile .ov{position:absolute;inset:0;background:rgba(0,80,32,.62);
+    opacity:0;transition:opacity .3s;display:grid;place-items:center;color:#fff}
+  .ig-tile:hover .ov,.ig-tile:focus-visible .ov{opacity:1}
+  .ig-tile .ov svg{width:34px;height:34px}
+  .ig-tile .vid{position:absolute;top:9px;right:10px;color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+  .ig-tile .vid svg{width:20px;height:20px;display:block}
+  .ig-foot{margin-top:34px;text-align:center}
+  .ig-foot a{color:var(--verde);font-weight:700;text-decoration:none;font-size:16px;
+    border-bottom:2px solid transparent;transition:border-color .2s;padding-bottom:2px}
+  .ig-foot a:hover{border-color:var(--verde)}
+  .ig{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease}
+  .ig.ig--in{opacity:1;transform:none}
+  @media (max-width:640px){
+    .ig{padding:64px 0}
+    .ig-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+    .ig-head{margin-bottom:28px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .ig,.ig-tile img{transition:none}
+    .ig{opacity:1;transform:none}
+  }
+</style>
+<section class="ig" id="instagram" hidden aria-label="Instagram del Club Parque">
+  <div class="wrap">
+    <div class="ig-head">
+      <div class="intro">
+        <div class="section-eyebrow">Seguinos</div>
+        <h2>Lo último en <span class="accent">Instagram</span>.</h2>
+      </div>
+      <div class="ig-profile">
+        <span class="ig-avatar"><img src="/logo.png" alt="Escudo del Club Parque"></span>
+        <div class="ig-user">
+          <span class="handle">@club.parque</span>
+          <span class="name">Club Social y Deportivo Parque</span>
+          <a class="btn btn-primary ig-follow" href="https://instagram.com/club.parque" target="_blank" rel="noopener">Seguir</a>
+        </div>
+      </div>
+    </div>
+    <div class="ig-grid" id="igGrid"></div>
+    <div class="ig-foot">
+      <a href="https://instagram.com/club.parque" target="_blank" rel="noopener">Ver el perfil completo en Instagram →</a>
+    </div>
+  </div>
+</section>
+<script>
+  (async function cargarInstagram(){
+    const sec = document.getElementById('instagram');
+    const grid = document.getElementById('igGrid');
+    if(!sec || !grid) return;
+    const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>';
+    const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    try{
+      const r = await fetch('/api/instagram/feed?limit=9');
+      const data = await r.json();
+      const items = (data && data.items) || [];
+      if(!items.length) return; // sin feed → la sección queda oculta
+      grid.innerHTML = items.slice(0,9).map(function(m){
+        const cap = (m.caption || 'Publicación de @club.parque').replace(/"/g,'&quot;').slice(0,120);
+        const vid = m.es_video ? '<span class="vid">'+PLAY+'</span>' : '';
+        return '<a class="ig-tile" href="'+m.permalink+'" target="_blank" rel="noopener" title="'+cap+'" aria-label="Ver publicación en Instagram">'
+          + '<img src="'+m.imagen+'" alt="'+cap+'" loading="lazy">'
+          + vid + '<span class="ov" aria-hidden="true">'+CAM+'</span></a>';
+      }).join('');
+      sec.hidden = false;
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ sec.classList.add('ig--in'); }); });
+    }catch(e){ /* silencioso: si falla, la sección no aparece */ }
+  })();
+</script>
+
 <!-- ═══════════════════ CONTACTO ═══════════════════ -->
 <footer class="contacto" id="contacto">
   <div class="wrap">
